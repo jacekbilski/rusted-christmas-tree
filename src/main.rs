@@ -11,7 +11,7 @@ use std::sync::mpsc::Receiver;
 use std::time::Instant;
 
 use self::gl::types::*;
-use self::glfw::{Action, Context, Key};
+use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
 // settings
 const SCR_WIDTH: u32 = 1920;
@@ -29,20 +29,9 @@ fn main() {
     // glfw: initialize and configure
     // ------------------------------
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
-    glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
-    glfw.window_hint(glfw::WindowHint::OpenGlProfile(glfw::OpenGlProfileHint::Core));
-
-    // glfw window creation
-    // --------------------
-    let (mut window, events) = glfw.create_window(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", glfw::WindowMode::Windowed)
-        .expect("Failed to create GLFW window");
-
-    window.make_current();
-    window.set_key_polling(true);
-    window.set_framebuffer_size_polling(true);
+    let (mut window, events) = setup_window(&mut glfw);
 
     // gl: load all OpenGL function pointers
-    // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
     let (shader_program, vao) = setup_drawing_triangle();
@@ -51,28 +40,25 @@ fn main() {
     frame_times.push_back(Instant::now());
 
     // render loop
-    // -----------
     while !window.should_close() {
-
-        // events
-        // -----
         process_events(&mut window, &events);
-
-        // render
-        // ------
-        unsafe {
-            gl::ClearColor(0.2, 0.3, 0.3, 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT);
-            draw_triangle(shader_program, vao);
-        }
-
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
+        render(shader_program, vao);
         window.swap_buffers();
         glfw.poll_events();
-
         calc_and_print_fps(&mut frame_times);
     }
+}
+
+fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
+    glfw.window_hint(glfw::WindowHint::ContextVersion(3, 3));
+    glfw.window_hint(glfw::WindowHint::OpenGlProfile(glfw::OpenGlProfileHint::Core));
+
+    let (mut window, events) = glfw.create_window(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", glfw::WindowMode::Windowed)
+        .expect("Failed to create GLFW window");
+    window.make_current();
+    window.set_key_polling(true);
+    window.set_framebuffer_size_polling(true);
+    (window, events)
 }
 
 fn setup_drawing_triangle() -> (u32, u32) {
@@ -188,6 +174,14 @@ fn ensure_compilation_success(shader_type: ShaderType, shader: u32) {
             println!("ERROR::SHADER::{:?}::COMPILATION_FAILED\n{}", shader_type, str::from_utf8(&info_log).unwrap());
             // panic ?
         }
+    }
+}
+
+fn render(shader_program: u32, vao: u32) {
+    unsafe {
+        gl::ClearColor(0.2, 0.3, 0.3, 1.0);
+        gl::Clear(gl::COLOR_BUFFER_BIT);
+        draw_triangle(shader_program, vao);
     }
 }
 
