@@ -67,11 +67,14 @@ fn setup_drawing_triangle() -> (u32, u32) {
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
-        // HINT: type annotation is crucial since default for float literals is f64
-        let vertices: [f32; 9] = [
-            -0.5, -0.5, 0.0, // left
-            0.5, -0.5, 0.0, // right
-            0.0, 0.5, 0.0  // top
+            // HINT: type annotation is crucial since default for float literals is f64
+        let vertices: [f32; 18] = [
+            -0.8, 0.0, 0.0, // left
+            -0.1, 0.7, 0.0,  // top
+            -0.1, -0.7, 0.0, // bottom
+            0.8, 0.0, 0.0, // right
+            0.1, 0.7, 0.0,  // top
+            0.1, -0.7, 0.0, // bottom
         ];
         let (mut vbo, mut vao) = (0 as u32, 0 as u32);
         gl::GenVertexArrays(1, &mut vao);   // create VAO
@@ -185,7 +188,7 @@ fn draw_triangle(shader_program: u32, vao: u32) {
     unsafe {
         gl::UseProgram(shader_program);
         gl::BindVertexArray(vao); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        gl::DrawArrays(gl::TRIANGLES, 0, 3);
+        gl::DrawArrays(gl::TRIANGLES, 0, 6);
         // gl::BindVertexArray(0); // no need to unbind it every time
     }
 }
