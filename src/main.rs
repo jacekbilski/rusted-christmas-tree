@@ -18,6 +18,13 @@ const SCR_WIDTH: u32 = 1920;
 const SCR_HEIGHT: u32 = 1080;
 const FPS_ARRAY_SIZE: usize = 100;
 
+#[derive(Debug)]
+enum ShaderType {
+    VertexShader,
+    FragmentShader,
+    Program
+}
+
 fn main() {
     // glfw: initialize and configure
     // ------------------------------
@@ -69,66 +76,8 @@ fn main() {
 }
 
 fn setup_drawing_triangle() -> (u32, u32) {
-    const VERTEX_SHADER_SOURCE: &str = r#"
-    #version 330 core
-    layout (location = 0) in vec3 aPos;
-    void main() {
-       gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-    }
-"#;
-
-    const FRAGMENT_SHADER_SOURCE: &str = r#"
-    #version 330 core
-    out vec4 FragColor;
-    void main() {
-       FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-    }
-"#;
-
     unsafe {
-        // build and compile our shader program
-        // ------------------------------------
-        // vertex shader
-        let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-        let c_str_vert = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
-        gl::ShaderSource(vertex_shader, 1, &c_str_vert.as_ptr(), ptr::null());
-        gl::CompileShader(vertex_shader);
-
-        // check for shader compile errors
-        let mut success = gl::FALSE as GLint;
-        let mut info_log = Vec::with_capacity(512);
-        info_log.set_len(512 - 1); // subtract 1 to skip the trailing null character
-        gl::GetShaderiv(vertex_shader, gl::COMPILE_STATUS, &mut success);
-        if success != gl::TRUE as GLint {
-            gl::GetShaderInfoLog(vertex_shader, 512, ptr::null_mut(), info_log.as_mut_ptr() as *mut GLchar);
-            println!("ERROR::SHADER::VERTEX::COMPILATION_FAILED\n{}", str::from_utf8(&info_log).unwrap());
-        }
-
-        // fragment shader
-        let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-        let c_str_frag = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
-        gl::ShaderSource(fragment_shader, 1, &c_str_frag.as_ptr(), ptr::null());
-        gl::CompileShader(fragment_shader);
-        // check for shader compile errors
-        gl::GetShaderiv(fragment_shader, gl::COMPILE_STATUS, &mut success);
-        if success != gl::TRUE as GLint {
-            gl::GetShaderInfoLog(fragment_shader, 512, ptr::null_mut(), info_log.as_mut_ptr() as *mut GLchar);
-            println!("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n{}", str::from_utf8(&info_log).unwrap());
-        }
-
-        // link shaders
-        let shader_program = gl::CreateProgram();
-        gl::AttachShader(shader_program, vertex_shader);
-        gl::AttachShader(shader_program, fragment_shader);
-        gl::LinkProgram(shader_program);
-        // check for linking errors
-        gl::GetProgramiv(shader_program, gl::LINK_STATUS, &mut success);
-        if success != gl::TRUE as GLint {
-            gl::GetProgramInfoLog(shader_program, 512, ptr::null_mut(), info_log.as_mut_ptr() as *mut GLchar);
-            println!("ERROR::SHADER::PROGRAM::COMPILATION_FAILED\n{}", str::from_utf8(&info_log).unwrap());
-        }
-        gl::DeleteShader(vertex_shader);
-        gl::DeleteShader(fragment_shader);
+        let shader_program = setup_shader_program();
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
@@ -164,6 +113,81 @@ fn setup_drawing_triangle() -> (u32, u32) {
         // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
 
         (shader_program, vao)
+    }
+}
+
+fn setup_shader_program() -> u32 {
+    let vertex_shader = setup_vertex_shader();
+    let fragment_shader = setup_fragment_shader();
+
+    unsafe {
+        // link shaders
+        let shader_program = gl::CreateProgram();
+        gl::AttachShader(shader_program, vertex_shader);
+        gl::AttachShader(shader_program, fragment_shader);
+        gl::LinkProgram(shader_program);
+        ensure_compilation_success(ShaderType::Program, shader_program);
+
+        gl::DeleteShader(vertex_shader);
+        gl::DeleteShader(fragment_shader);
+        shader_program
+    }
+}
+
+fn setup_vertex_shader() -> u32 {
+    const VERTEX_SHADER_SOURCE: &str = r#"
+        #version 330 core
+        layout (location = 0) in vec3 aPos;
+        void main() {
+           gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+        }
+    "#;
+
+    unsafe {
+        let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
+        let c_str_vert = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
+        gl::ShaderSource(vertex_shader, 1, &c_str_vert.as_ptr(), ptr::null());
+        gl::CompileShader(vertex_shader);
+        ensure_compilation_success(ShaderType::VertexShader, vertex_shader);
+        vertex_shader
+    }
+}
+
+fn setup_fragment_shader() -> u32 {
+    const FRAGMENT_SHADER_SOURCE: &str = r#"
+        #version 330 core
+        out vec4 FragColor;
+        void main() {
+           FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+        }
+    "#;
+
+    unsafe {
+        let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
+        let c_str_frag = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
+        gl::ShaderSource(fragment_shader, 1, &c_str_frag.as_ptr(), ptr::null());
+        gl::CompileShader(fragment_shader);
+        ensure_compilation_success(ShaderType::FragmentShader, fragment_shader);
+        fragment_shader
+    }
+}
+
+fn ensure_compilation_success(shader_type: ShaderType, shader: u32) {
+    unsafe {
+        let mut success = gl::FALSE as GLint;
+        let mut info_log = Vec::with_capacity(512);
+        info_log.set_len(512 - 1); // subtract 1 to skip the trailing null character
+        match shader_type {
+            ShaderType::Program => gl::GetProgramiv(shader, gl::LINK_STATUS, &mut success),
+            _ => gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success),
+        }
+
+        if success != gl::TRUE as GLint {
+            gl::GetProgramInfoLog(shader, 512, ptr::null_mut(), info_log.as_mut_ptr() as *mut GLchar);
+            // fishy - doesn't work
+            println!("ERROR::SHADER::{:?}::COMPILATION_FAILED\n{}", shader_type, str::from_utf8(&info_log).unwrap());
+            // panic ?
+        }
     }
 }
 
