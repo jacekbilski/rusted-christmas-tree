@@ -33,11 +33,11 @@ fn main() {
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
     let mut frame_times: VecDeque<Instant> = VecDeque::with_capacity(FPS_ARRAY_SIZE);
+    frame_times.push_back(Instant::now());
 
     // render loop
     // -----------
     while !window.should_close() {
-        frame_times.push_back(Instant::now());
 
         // events
         // -----
@@ -55,15 +55,20 @@ fn main() {
         window.swap_buffers();
         glfw.poll_events();
 
-        let i = if frame_times.len() == FPS_ARRAY_SIZE {
-            frame_times.pop_front().unwrap()
-        } else {
-            *(frame_times.front().unwrap())
-        };
-        let elapsed = i.elapsed();
-        let fps = 1000000.0 * frame_times.len() as f64 / elapsed.as_micros() as f64;
-        println!("FPS: {:?}, elapsed: {:?}", fps, elapsed);
+        calc_and_print_fps(&mut frame_times);
     }
+}
+
+fn calc_and_print_fps(frame_times: &mut VecDeque<Instant>) {
+    let earliest_frame = if frame_times.len() == FPS_ARRAY_SIZE {
+        frame_times.pop_front().unwrap()
+    } else {
+        *(frame_times.front().unwrap())
+    };
+    let elapsed = earliest_frame.elapsed();
+    let fps = 1000000.0 * frame_times.len() as f64 / elapsed.as_micros() as f64;
+    println!("FPS: {:?}, elapsed: {:?}", fps, elapsed);
+    frame_times.push_back(Instant::now());
 }
 
 // NOTE: not the same version as in common.rs!
