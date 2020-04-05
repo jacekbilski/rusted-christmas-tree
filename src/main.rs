@@ -1,14 +1,16 @@
 extern crate gl;
 extern crate glfw;
 
+use std::collections::VecDeque;
 use std::sync::mpsc::Receiver;
+use std::time::Instant;
 
 use self::glfw::{Action, Context, Key};
-
 
 // settings
 const SCR_WIDTH: u32 = 1920;
 const SCR_HEIGHT: u32 = 1080;
+const FPS_ARRAY_SIZE: usize = 100;
 
 fn main() {
     // glfw: initialize and configure
@@ -30,9 +32,13 @@ fn main() {
     // ---------------------------------------
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
+    let mut frame_times: VecDeque<Instant> = VecDeque::with_capacity(FPS_ARRAY_SIZE);
+
     // render loop
     // -----------
     while !window.should_close() {
+        frame_times.push_back(Instant::now());
+
         // events
         // -----
         process_events(&mut window, &events);
@@ -48,6 +54,15 @@ fn main() {
         // -------------------------------------------------------------------------------
         window.swap_buffers();
         glfw.poll_events();
+
+        let i = if frame_times.len() == FPS_ARRAY_SIZE {
+            frame_times.pop_front().unwrap()
+        } else {
+            *(frame_times.front().unwrap())
+        };
+        let elapsed = i.elapsed();
+        let fps = 1000000.0 * frame_times.len() as f64 / elapsed.as_micros() as f64;
+        println!("FPS: {:?}, elapsed: {:?}", fps, elapsed);
     }
 }
 
