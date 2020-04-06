@@ -158,8 +158,10 @@ fn setup_vertex_shader() -> u32 {
     const VERTEX_SHADER_SOURCE: &str = r#"
         #version 330 core
         layout (location = 0) in vec3 aPos;
+        out vec4 vertexColor;
         void main() {
            gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+           vertexColor = vec4(0.5, 0.0, 0.0, 1.0);
         }
     "#;
 
@@ -176,9 +178,10 @@ fn setup_vertex_shader() -> u32 {
 fn setup_fragment_shader() -> u32 {
     const FRAGMENT_SHADER_SOURCE: &str = r#"
         #version 330 core
+        in vec4 vertexColor;
         out vec4 FragColor;
         void main() {
-           FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+           FragColor = vertexColor;
         }
     "#;
 
@@ -240,7 +243,6 @@ fn calc_and_print_fps(frame_times: &mut VecDeque<Instant>) {
     frame_times.push_back(Instant::now());
 }
 
-// NOTE: not the same version as in common.rs!
 fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>) {
     for (_, event) in glfw::flush_messages(events) {
         match event {
