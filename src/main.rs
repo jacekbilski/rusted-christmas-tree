@@ -71,11 +71,11 @@ fn setup_drawing_triangle() -> (u32, u32) {
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
         // HINT: type annotation is crucial since default for float literals is f64
-    let vertices: [f32; 12] = [
-        -0.8, 0.0, 0.0, // left
-        0.0, 0.7, 0.0,  // top
-        0.0, -0.7, 0.0, // bottom
-        0.8, 0.0, 0.0, // right
+    let vertices: [f32; 24] = [
+        -0.8, 0.0, 0.0, 1.0, 0.0, 0.0, // left
+        0.0, 0.7, 0.0, 0.0, 1.0, 0.0, // top
+        0.0, -0.7, 0.0, 0.0, 0.0, 1.0, // bottom
+        0.8, 0.0, 0.0, 1.0, 0.0, 0.0, // right
     ];
     let indices: [u32; 6] = [
         0, 1, 2,
@@ -100,10 +100,14 @@ fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
 
         within_vao_context();
 
+        let stride = 6 * mem::size_of::<GLfloat>() as GLsizei;
         // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
         // this call also connects my VBO to this attribute
-        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 3 * mem::size_of::<GLfloat>() as GLsizei, ptr::null());
-        gl::EnableVertexAttribArray(0); // enable the attribute
+        gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
+        gl::EnableVertexAttribArray(0); // enable the attribute for position
+        // second three floats are for colour, last param is used to point to values within single vertex
+        gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
+        gl::EnableVertexAttribArray(1); // enable the attribute for colour
 
         gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind my VBO
         // do NOT unbind EBO, VAO would remember that
@@ -112,7 +116,7 @@ fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
     }
 }
 
-fn create_vbo(vertices: &[f32; 12]) {
+fn create_vbo(vertices: &[f32; 24]) {
     unsafe {
         let mut vbo = 0 as VBO;
         gl::GenBuffers(1, &mut vbo); // create buffer for my data
@@ -158,8 +162,11 @@ fn setup_vertex_shader() -> u32 {
     const VERTEX_SHADER_SOURCE: &str = r#"
         #version 330 core
         layout (location = 0) in vec3 aPos;
+        layout (location = 1) in vec3 aCol;
+        out vec3 vCol;
         void main() {
-           gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
+           gl_Position = vec4(aPos, 1.0);
+           vCol = aCol;
         }
     "#;
 
@@ -176,10 +183,10 @@ fn setup_vertex_shader() -> u32 {
 fn setup_fragment_shader() -> u32 {
     const FRAGMENT_SHADER_SOURCE: &str = r#"
         #version 330 core
-        uniform vec4 myColor;
+        in vec3 vCol;
         out vec4 FragColor;
         void main() {
-           FragColor = myColor;
+           FragColor = vec4(vCol, 1.0);
         }
     "#;
 
@@ -223,12 +230,6 @@ fn render(glfw: &mut Glfw, shader_program: u32, vao: u32) {
 fn draw_triangle(glfw: &mut Glfw, shader_program: u32, vao: u32) {
     unsafe {
         gl::UseProgram(shader_program);
-
-        let time_value = glfw.get_time() as f32;
-        let green_value = time_value.sin() / 2.0 + 0.5;
-        let my_color = CString::new("myColor").unwrap();
-        let vertex_color_location = gl::GetUniformLocation(shader_program, my_color.as_ptr());
-        gl::Uniform4f(vertex_color_location, 0.0, green_value, 0.0, 1.0);
 
         gl::BindVertexArray(vao); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
