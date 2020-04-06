@@ -25,6 +25,10 @@ enum ShaderType {
     Program
 }
 
+type VBO = u32;
+type VAO = u32;
+type EBO = u32;
+
 fn main() {
     // glfw: initialize and configure
     // ------------------------------
@@ -62,51 +66,71 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
 }
 
 fn setup_drawing_triangle() -> (u32, u32) {
+    let shader_program = setup_shader_program();
+
+    // set up vertex data (and buffer(s)) and configure vertex attributes
+    // ------------------------------------------------------------------
+        // HINT: type annotation is crucial since default for float literals is f64
+    let vertices: [f32; 12] = [
+        -0.8, 0.0, 0.0, // left
+        0.0, 0.7, 0.0,  // top
+        0.0, -0.7, 0.0, // bottom
+        0.8, 0.0, 0.0, // right
+    ];
+    let indices: [u32; 6] = [
+        0, 1, 2,
+        3, 1, 2,
+    ];
+
+    let vao = create_vao(&vertices, &indices);
+
+    (shader_program, vao)
+}
+
+fn create_vao(vertices: &[f32; 12], indices: &[u32; 6]) -> VAO {
     unsafe {
-        let shader_program = setup_shader_program();
+        let mut vao = 0 as VAO;
+        gl::GenVertexArrays(1, &mut vao); // create VAO
+        gl::BindVertexArray(vao); // ...and bind it
 
-        // set up vertex data (and buffer(s)) and configure vertex attributes
-        // ------------------------------------------------------------------
-            // HINT: type annotation is crucial since default for float literals is f64
-        let vertices: [f32; 12] = [
-            -0.8, 0.0, 0.0, // left
-            0.0, 0.7, 0.0,  // top
-            0.0, -0.7, 0.0, // bottom
-            0.8, 0.0, 0.0, // right
-        ];
-        let indices: [u32; 6] = [
-            0, 1, 2,
-            3, 1, 2,
-        ];
-        let (mut vbo, mut vao, mut ebo) = (0 as u32, 0 as u32, 0 as u32);
-        gl::GenVertexArrays(1, &mut vao);   // create VAO
-        gl::BindVertexArray(vao);   // ...and bind it
-
-        gl::GenBuffers(1, &mut vbo);    // create buffer for my data
-
-        gl::BindBuffer(gl::ARRAY_BUFFER, vbo);  // ARRAY_BUFFER now "points" to my buffer
-        gl::BufferData(gl::ARRAY_BUFFER,
-                       (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                       &vertices[0] as *const f32 as *const c_void,
-                       gl::STATIC_DRAW);    // actually fill ARRAY_BUFFER (my buffer) with data
-
-        gl::GenBuffers(1, &mut ebo);    // create buffer for indices (elements)
-        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo);  // ELEMENT_ARRAY_BUFFER now "points" to my buffer
-        gl::BufferData(gl::ELEMENT_ARRAY_BUFFER,
-                       (indices.len() * mem::size_of::<GLuint>()) as GLsizeiptr,
-                       &indices[0] as *const u32 as *const c_void,
-                       gl::STATIC_DRAW);    // actually fill ELEMENT_ARRAY_BUFFER with data
+        create_vbo(&vertices);
+        create_ebo(&indices);
 
         // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
         // this call also connects my VBO to this attribute
         gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, 3 * mem::size_of::<GLfloat>() as GLsizei, ptr::null());
         gl::EnableVertexAttribArray(0); // enable the attribute
 
-        gl::BindBuffer(gl::ARRAY_BUFFER, 0);    // unbind my VBO
-        // do NOT unbind EBO, VAO will remember that
+        gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind my VBO
+        // do NOT unbind EBO, VAO would remember that
         gl::BindVertexArray(0); // unbind my VAO
+        vao
+    }
+}
 
-        (shader_program, vao)
+fn create_vbo(vertices: &[f32; 12]) -> Option<VBO> {
+    unsafe {
+        let mut vbo = 0 as VBO;
+        gl::GenBuffers(1, &mut vbo); // create buffer for my data
+        gl::BindBuffer(gl::ARRAY_BUFFER, vbo); // ARRAY_BUFFER now "points" to my buffer
+        gl::BufferData(gl::ARRAY_BUFFER,
+                       (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
+                       &vertices[0] as *const f32 as *const c_void,
+                       gl::STATIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
+        Some(vbo)
+    }
+}
+
+fn create_ebo(indices: &[u32; 6]) -> Option<EBO> {
+    unsafe {
+        let mut ebo = 0 as EBO;
+        gl::GenBuffers(1, &mut ebo); // create buffer for indices (elements)
+        gl::BindBuffer(gl::ELEMENT_ARRAY_BUFFER, ebo); // ELEMENT_ARRAY_BUFFER now "points" to my buffer
+        gl::BufferData(gl::ELEMENT_ARRAY_BUFFER,
+                       (indices.len() * mem::size_of::<GLuint>()) as GLsizeiptr,
+                       &indices[0] as *const u32 as *const c_void,
+                       gl::STATIC_DRAW); // actually fill ELEMENT_ARRAY_BUFFER with data
+        Some(ebo)
     }
 }
 
