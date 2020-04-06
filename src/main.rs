@@ -82,19 +82,23 @@ fn setup_drawing_triangle() -> (u32, u32) {
         3, 1, 2,
     ];
 
-    let vao = create_vao(&vertices, &indices);
+    let within_vao = || {
+        create_vbo(&vertices);
+        create_ebo(&indices);
+    };
+
+    let vao = create_vao(within_vao);
 
     (shader_program, vao)
 }
 
-fn create_vao(vertices: &[f32; 12], indices: &[u32; 6]) -> VAO {
+fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
     unsafe {
         let mut vao = 0 as VAO;
         gl::GenVertexArrays(1, &mut vao); // create VAO
         gl::BindVertexArray(vao); // ...and bind it
 
-        create_vbo(&vertices);
-        create_ebo(&indices);
+        within_vao_context();
 
         // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
         // this call also connects my VBO to this attribute
@@ -108,7 +112,7 @@ fn create_vao(vertices: &[f32; 12], indices: &[u32; 6]) -> VAO {
     }
 }
 
-fn create_vbo(vertices: &[f32; 12]) -> Option<VBO> {
+fn create_vbo(vertices: &[f32; 12]) {
     unsafe {
         let mut vbo = 0 as VBO;
         gl::GenBuffers(1, &mut vbo); // create buffer for my data
@@ -117,11 +121,10 @@ fn create_vbo(vertices: &[f32; 12]) -> Option<VBO> {
                        (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
                        &vertices[0] as *const f32 as *const c_void,
                        gl::STATIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
-        Some(vbo)
     }
 }
 
-fn create_ebo(indices: &[u32; 6]) -> Option<EBO> {
+fn create_ebo(indices: &[u32; 6]) {
     unsafe {
         let mut ebo = 0 as EBO;
         gl::GenBuffers(1, &mut ebo); // create buffer for indices (elements)
@@ -130,7 +133,6 @@ fn create_ebo(indices: &[u32; 6]) -> Option<EBO> {
                        (indices.len() * mem::size_of::<GLuint>()) as GLsizeiptr,
                        &indices[0] as *const u32 as *const c_void,
                        gl::STATIC_DRAW); // actually fill ELEMENT_ARRAY_BUFFER with data
-        Some(ebo)
     }
 }
 
