@@ -46,7 +46,7 @@ fn main() {
     // render loop
     while !window.should_close() {
         process_events(&mut window, &events);
-        render(shader_program, vao);
+        render(&mut glfw, shader_program, vao);
         window.swap_buffers();
         glfw.poll_events();
         calc_and_print_fps(&mut frame_times);
@@ -158,10 +158,8 @@ fn setup_vertex_shader() -> u32 {
     const VERTEX_SHADER_SOURCE: &str = r#"
         #version 330 core
         layout (location = 0) in vec3 aPos;
-        out vec4 vertexColor;
         void main() {
            gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);
-           vertexColor = vec4(0.5, 0.0, 0.0, 1.0);
         }
     "#;
 
@@ -178,10 +176,10 @@ fn setup_vertex_shader() -> u32 {
 fn setup_fragment_shader() -> u32 {
     const FRAGMENT_SHADER_SOURCE: &str = r#"
         #version 330 core
-        in vec4 vertexColor;
+        uniform vec4 myColor;
         out vec4 FragColor;
         void main() {
-           FragColor = vertexColor;
+           FragColor = myColor;
         }
     "#;
 
@@ -214,17 +212,24 @@ fn ensure_compilation_success(shader_type: ShaderType, shader: u32) {
     }
 }
 
-fn render(shader_program: u32, vao: u32) {
+fn render(glfw: &mut Glfw, shader_program: u32, vao: u32) {
     unsafe {
         gl::ClearColor(0.2, 0.3, 0.3, 1.0);
         gl::Clear(gl::COLOR_BUFFER_BIT);
-        draw_triangle(shader_program, vao);
+        draw_triangle(glfw, shader_program, vao);
     }
 }
 
-fn draw_triangle(shader_program: u32, vao: u32) {
+fn draw_triangle(glfw: &mut Glfw, shader_program: u32, vao: u32) {
     unsafe {
         gl::UseProgram(shader_program);
+
+        let time_value = glfw.get_time() as f32;
+        let green_value = time_value.sin() / 2.0 + 0.5;
+        let my_color = CString::new("myColor").unwrap();
+        let vertex_color_location = gl::GetUniformLocation(shader_program, my_color.as_ptr());
+        gl::Uniform4f(vertex_color_location, 0.0, green_value, 0.0, 1.0);
+
         gl::BindVertexArray(vao); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
         // gl::BindVertexArray(0); // no need to unbind it every time
