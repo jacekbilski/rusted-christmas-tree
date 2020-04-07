@@ -4,6 +4,7 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
+use crate::drawable::Drawable;
 use crate::shader::Shader;
 
 use self::gl::types::*;
@@ -92,8 +93,10 @@ impl Ground {
                            gl::STATIC_DRAW); // actually fill ELEMENT_ARRAY_BUFFER with data
         }
     }
+}
 
-    pub fn draw(&self) {
+impl Drawable for Ground {
+    fn draw(&self) {
         unsafe {
             gl::UseProgram(self.shader.id);
 

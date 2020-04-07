@@ -1,17 +1,20 @@
 extern crate gl;
 extern crate glfw;
 
+use std::boxed::Box;
 use std::collections::VecDeque;
 use std::sync::mpsc::Receiver;
 use std::time::Instant;
 
-// use triangle::Triangle;
+use drawable::Drawable;
+use triangle::Triangle;
 use xmas_tree::Ground;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
+mod drawable;
 mod shader;
-// mod triangle;
+mod triangle;
 mod xmas_tree;
 
 // settings
@@ -28,7 +31,8 @@ fn main() {
     // gl: load all OpenGL function pointers
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let obj = Ground::setup();
+    let obj: Box<dyn Drawable> = Box::new(Ground::setup());
+    // let obj: Box<dyn Drawable> = Box::new(Triangle::setup());
 
     let mut frame_times: VecDeque<Instant> = VecDeque::with_capacity(FPS_ARRAY_SIZE);
     frame_times.push_back(Instant::now());
@@ -55,7 +59,7 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
     (window, events)
 }
 
-fn render(obj: &Ground) {
+fn render(obj: &Box<dyn Drawable>) {
     unsafe {
         gl::ClearColor(0.2, 0.3, 0.3, 1.0);
         gl::Clear(gl::COLOR_BUFFER_BIT);

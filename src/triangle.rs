@@ -4,6 +4,7 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
+use crate::drawable::Drawable;
 use crate::shader::Shader;
 
 use self::gl::types::*;
@@ -92,14 +93,16 @@ impl Triangle {
                            gl::STATIC_DRAW); // actually fill ELEMENT_ARRAY_BUFFER with data
         }
     }
+}
 
-    pub fn draw(&self) {
+impl Drawable for Triangle {
+    fn draw(&self) {
         unsafe {
             gl::UseProgram(self.shader.id);
 
-            gl::BindVertexArray(self.vao); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+            gl::BindVertexArray(self.vao);
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
-            gl::BindVertexArray(0); // no need to unbind it every time
+            gl::BindVertexArray(0);
         }
     }
 }
