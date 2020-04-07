@@ -12,37 +12,37 @@ type VBO = u32;
 type VAO = u32;
 type EBO = u32;
 
-pub struct Triangle {
+pub struct Ground {
     shader: Shader,
     vao: VAO,
 }
 
-impl Triangle {
-    pub fn setup() -> Triangle {
+impl Ground {
+    pub fn setup() -> Ground {
         let shader = Shader::new();
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
         // HINT: type annotation is crucial since default for float literals is f64
         let vertices: [f32; 24] = [
-            -0.8, 0.0, 0.0, 1.0, 0.0, 0.0, // left
-            0.0, 0.7, 0.0, 0.0, 1.0, 0.0, // top
-            0.0, -0.7, 0.0, 0.0, 0.0, 1.0, // bottom
-            0.8, 0.0, 0.0, 1.0, 0.0, 0.0, // right
+            -0.8, -0.8, 0.0, 1.0, 1.0, 1.0, // bottom left
+            -0.8, 0.8, 0.0, 1.0, 1.0, 1.0, // top left
+            0.8, 0.8, 0.0, 1.0, 1.0, 1.0, // top right
+            0.8, -0.8, 0.0, 1.0, 1.0, 1.0, // bottom right
         ];
         let indices: [u32; 6] = [
             0, 1, 2,
-            3, 1, 2,
+            2, 3, 0,
         ];
 
         let within_vao = || {
-            Triangle::create_vbo(&vertices);
-            Triangle::create_ebo(&indices);
+            Ground::create_vbo(&vertices);
+            Ground::create_ebo(&indices);
         };
 
-        let vao = Triangle::create_vao(within_vao);
+        let vao = Ground::create_vao(within_vao);
 
-        Triangle {shader, vao}
+        Ground{shader, vao}
     }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
@@ -97,9 +97,9 @@ impl Triangle {
         unsafe {
             gl::UseProgram(self.shader.id);
 
-            gl::BindVertexArray(self.vao); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+            gl::BindVertexArray(self.vao);
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
-            gl::BindVertexArray(0); // no need to unbind it every time
+            gl::BindVertexArray(0);
         }
     }
 }

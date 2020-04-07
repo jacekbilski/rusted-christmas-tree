@@ -5,12 +5,14 @@ use std::collections::VecDeque;
 use std::sync::mpsc::Receiver;
 use std::time::Instant;
 
-use triangle::Triangle;
+// use triangle::Triangle;
+use xmas_tree::Ground;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
 mod shader;
-mod triangle;
+// mod triangle;
+mod xmas_tree;
 
 // settings
 const SCR_WIDTH: u32 = 1920;
@@ -26,7 +28,7 @@ fn main() {
     // gl: load all OpenGL function pointers
     gl::load_with(|symbol| window.get_proc_address(symbol) as *const _);
 
-    let triangle = Triangle::setup();
+    let obj = Ground::setup();
 
     let mut frame_times: VecDeque<Instant> = VecDeque::with_capacity(FPS_ARRAY_SIZE);
     frame_times.push_back(Instant::now());
@@ -34,7 +36,7 @@ fn main() {
     // render loop
     while !window.should_close() {
         process_events(&mut window, &events);
-        render(&triangle);
+        render(&obj);
         window.swap_buffers();
         glfw.poll_events();
         calc_and_print_fps(&mut frame_times);
@@ -53,11 +55,11 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
     (window, events)
 }
 
-fn render(triangle: &Triangle) {
+fn render(obj: &Ground) {
     unsafe {
         gl::ClearColor(0.2, 0.3, 0.3, 1.0);
         gl::Clear(gl::COLOR_BUFFER_BIT);
-        triangle.draw();
+        obj.draw();
     }
 }
 
