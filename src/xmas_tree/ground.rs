@@ -28,11 +28,11 @@ impl Ground {
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
         // HINT: type annotation is crucial since default for float literals is f64
-        let vertices: [f32; 24] = [
-            -10., 0., -10., 1., 1., 1., // far
-            -10., 0., 10., 0., 1., 1., // left
-            10., 0., -10., 1., 1., 0., // right
-            10., 0., 10., 1., 1., 1., // near
+        let vertices: [f32; 36] = [ // position, colour, normal vector
+            -10., 0., -10., 1., 1., 1., 0., 1., 0., // far
+            -10., 0., 10., 0., 1., 1., 0., 1., 0., // left
+            10., 0., -10., 1., 1., 0., 0., 1., 0., // right
+            10., 0., 10., 1., 1., 1., 0., 1., 0., // near
         ];
         let indices: [u32; 6] = [
             0, 2, 1,
@@ -46,7 +46,7 @@ impl Ground {
 
         let vao = Ground::create_vao(within_vao);
 
-        Ground{shader, vao}
+        Ground { shader, vao }
     }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
@@ -57,14 +57,19 @@ impl Ground {
 
             within_vao_context();
 
-            let stride = 6 * mem::size_of::<GLfloat>() as GLsizei;
+            let stride = 9 * mem::size_of::<GLfloat>() as GLsizei;
             // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
             // this call also connects my VBO to this attribute
             gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
             gl::EnableVertexAttribArray(0); // enable the attribute for position
+
             // second three floats are for colour, last param is used to point to values within single vertex
             gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
             gl::EnableVertexAttribArray(1); // enable the attribute for colour
+
+            // third three floats are for normal vector used for lightning calculations
+            gl::VertexAttribPointer(2, 3, gl::FLOAT, gl::FALSE, stride, (6 * mem::size_of::<GLfloat>()) as *const c_void);
+            gl::EnableVertexAttribArray(2); // enable the attribute for normal vector
 
             gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind my VBO
             // do NOT unbind EBO, VAO would remember that
@@ -73,7 +78,7 @@ impl Ground {
         }
     }
 
-    fn create_vbo(vertices: &[f32; 24]) {
+    fn create_vbo(vertices: &[f32]) {
         unsafe {
             let mut vbo = 0 as VBO;
             gl::GenBuffers(1, &mut vbo); // create buffer for my data
@@ -85,7 +90,7 @@ impl Ground {
         }
     }
 
-    fn create_ebo(indices: &[u32; 6]) {
+    fn create_ebo(indices: &[u32]) {
         unsafe {
             let mut ebo = 0 as EBO;
             gl::GenBuffers(1, &mut ebo); // create buffer for indices (elements)
@@ -103,6 +108,8 @@ impl Drawable for Ground {
         unsafe {
             gl::UseProgram(self.shader.id);
             self.shader.set_vec3("lightColour", &vec3(1., 1., 1.));
+            // self.shader.set_vec3("lightPosition", &vec3(10., 100., 10.));
+            self.shader.set_vec3("lightPosition", &vec3(5., 6., 2.));
 
             self.shader.set_mat4("model", &Matrix4::identity() as &Matrix4<f32>);
             let view: Matrix4<f32> = Matrix4::look_at(Point3::new(15., 12., 12.), Point3::new(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));

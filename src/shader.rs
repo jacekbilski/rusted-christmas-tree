@@ -17,7 +17,7 @@ pub struct Shader {
 enum ShaderType {
     VertexShader,
     FragmentShader,
-    Program
+    Program,
 }
 
 impl Shader {
@@ -35,7 +35,7 @@ impl Shader {
 
             gl::DeleteShader(vertex_shader);
             gl::DeleteShader(fragment_shader);
-            Shader {id: shader_program}
+            Shader { id: shader_program }
         }
     }
 
@@ -45,16 +45,21 @@ impl Shader {
 
         layout (location = 0) in vec3 aPos;
         layout (location = 1) in vec3 aCol;
+        layout (location = 2) in vec3 aNormal;
 
         uniform mat4 model;
         uniform mat4 view;
         uniform mat4 projection;
 
-        out vec3 vCol;
+        out vec3 FragPosition;
+        out vec3 Colour;
+        out vec3 Normal;
 
         void main() {
-           gl_Position = projection * view * model * vec4(aPos, 1.0);
-           vCol = aCol;
+            gl_Position = projection * view * model * vec4(aPos, 1.0);
+            FragPosition = vec3(model * vec4(aPos, 1.0));
+            Colour = aCol;
+            Normal = aNormal;
         }
     "#;
 
@@ -72,16 +77,26 @@ impl Shader {
         const FRAGMENT_SHADER_SOURCE: &str = r#"
         #version 330 core
 
-        in vec3 vCol;
+        in vec3 FragPosition;
+        in vec3 Colour;
+        in vec3 Normal;
 
         uniform vec3 lightColour;
+        uniform vec3 lightPosition;
 
         out vec4 FragColor;
 
         const float ambientStrength = 0.1;
 
         void main() {
-           FragColor = vec4(ambientStrength * lightColour * vCol, 1.0);
+            vec3 ambient = ambientStrength * lightColour;
+
+            vec3 norm = normalize(Normal);
+            vec3 lightDir = normalize(lightPosition - FragPosition);
+            float diff = max(dot(norm, lightDir), 0.0);
+            vec3 diffuse = diff * lightColour;
+
+            FragColor = vec4((ambient + diffuse) * Colour, 1.0);
         }
     "#;
 
@@ -115,13 +130,13 @@ impl Shader {
     }
 
     pub unsafe fn set_vec3(&self, name: &str, vec: &Vector3<f32>) {
-        let c_name= CString::new(name).unwrap();
+        let c_name = CString::new(name).unwrap();
         let location = gl::GetUniformLocation(self.id, c_name.as_ptr());
         gl::Uniform3fv(location, 1, vec.as_ptr());
     }
 
     pub unsafe fn set_mat4(&self, name: &str, mat: &Matrix4<f32>) {
-        let c_name= CString::new(name).unwrap();
+        let c_name = CString::new(name).unwrap();
         let location = gl::GetUniformLocation(self.id, c_name.as_ptr());
         gl::UniformMatrix4fv(location, 1, gl::FALSE, mat.as_ptr());
     }
