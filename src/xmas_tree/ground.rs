@@ -5,7 +5,7 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
-use cgmath::{Deg, Matrix4, perspective, vec3};
+use cgmath::{Deg, Matrix4, perspective, Point3, vec3};
 use cgmath::prelude::*;
 
 use crate::drawable::Drawable;
@@ -30,14 +30,14 @@ impl Ground {
         // ------------------------------------------------------------------
         // HINT: type annotation is crucial since default for float literals is f64
         let vertices: [f32; 24] = [
-            -0.8, -0.8, 0.0, 1.0, 1.0, 1.0, // bottom left
-            -0.8, 0.8, 0.0, 1.0, 1.0, 1.0, // top left
-            0.8, 0.8, 0.0, 1.0, 1.0, 1.0, // top right
-            0.8, -0.8, 0.0, 1.0, 1.0, 1.0, // bottom right
+            -10., 0., -10., 1., 1., 1., // far
+            -10., 0., 10., 0., 1., 1., // left
+            10., 0., -10., 1., 1., 0., // right
+            10., 0., 10., 1., 1., 1., // near
         ];
         let indices: [u32; 6] = [
-            0, 1, 2,
-            2, 3, 0,
+            0, 2, 1,
+            2, 1, 3,
         ];
 
         let within_vao = || {
@@ -105,7 +105,7 @@ impl Drawable for Ground {
             gl::UseProgram(self.shader.id);
 
             self.set_uniform_matrix("model", Matrix4::identity());
-            let view: Matrix4<f32> = Matrix4::from_translation(vec3(0., 0., -3.));
+            let view: Matrix4<f32> = Matrix4::look_at(Point3::new(15., 12., 12.), Point3::new(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
             self.set_uniform_matrix("view", view);
             let projection = perspective(Deg(45.0), 1920 as f32 / 1080 as f32, 0.1, 100.0);
             self.set_uniform_matrix("projection", projection);
