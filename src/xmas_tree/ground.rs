@@ -102,6 +102,7 @@ impl Drawable for Ground {
     fn draw(&self) {
         unsafe {
             gl::UseProgram(self.shader.id);
+            self.shader.set_vec3("lightColour", &vec3(1., 1., 1.));
 
             self.shader.set_mat4("model", &Matrix4::identity() as &Matrix4<f32>);
             let view: Matrix4<f32> = Matrix4::look_at(Point3::new(15., 12., 12.), Point3::new(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));

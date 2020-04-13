@@ -4,7 +4,7 @@ use std::ffi::CString;
 use std::ptr;
 use std::str;
 
-use cgmath::Matrix4;
+use cgmath::{Matrix4, Vector3};
 use cgmath::prelude::*;
 
 use self::gl::types::*;
@@ -73,10 +73,15 @@ impl Shader {
         #version 330 core
 
         in vec3 vCol;
+
+        uniform vec3 lightColour;
+
         out vec4 FragColor;
 
+        const float ambientStrength = 0.1;
+
         void main() {
-           FragColor = vec4(vCol, 1.0);
+           FragColor = vec4(ambientStrength * lightColour * vCol, 1.0);
         }
     "#;
 
@@ -107,6 +112,12 @@ impl Shader {
                 // panic ?
             }
         }
+    }
+
+    pub unsafe fn set_vec3(&self, name: &str, vec: &Vector3<f32>) {
+        let c_name= CString::new(name).unwrap();
+        let location = gl::GetUniformLocation(self.id, c_name.as_ptr());
+        gl::Uniform3fv(location, 1, vec.as_ptr());
     }
 
     pub unsafe fn set_mat4(&self, name: &str, mat: &Matrix4<f32>) {
