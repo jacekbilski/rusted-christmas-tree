@@ -112,19 +112,23 @@ impl Shader {
 
     fn ensure_compilation_success(shader_type: ShaderType, shader: u32) {
         unsafe {
+            let max_len = 1024 as usize;
             let mut success = gl::FALSE as GLint;
-            let mut info_log = Vec::with_capacity(512);
-            info_log.set_len(512 - 1); // subtract 1 to skip the trailing null character
+            let mut info_log = Vec::with_capacity(max_len);
+            info_log.set_len(max_len - 1); // subtract 1 to skip the trailing null character
             match shader_type {
                 ShaderType::Program => gl::GetProgramiv(shader, gl::LINK_STATUS, &mut success),
                 _ => gl::GetShaderiv(shader, gl::COMPILE_STATUS, &mut success),
             }
 
             if success != gl::TRUE as GLint {
-                gl::GetProgramInfoLog(shader, 512, ptr::null_mut(), info_log.as_mut_ptr() as *mut GLchar);
-                // fishy - doesn't work
-                println!("ERROR::SHADER::{:?}::COMPILATION_FAILED\n{}", shader_type, str::from_utf8(&info_log).unwrap());
-                // panic ?
+                let mut msg_len: i32 = -1;
+                match shader_type {
+                    ShaderType::Program => gl::GetProgramInfoLog(shader, max_len as i32, &mut msg_len, info_log.as_mut_ptr() as *mut GLchar),
+                    _ => gl::GetShaderInfoLog(shader, max_len as i32, &mut msg_len, info_log.as_mut_ptr() as *mut GLchar),
+                }
+                info_log.truncate(msg_len as usize);
+                panic!("ERROR::SHADER::{:?}::COMPILATION_FAILED\n{}", shader_type, str::from_utf8(&info_log).unwrap());
             }
         }
     }
