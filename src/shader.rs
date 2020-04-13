@@ -4,6 +4,9 @@ use std::ffi::CString;
 use std::ptr;
 use std::str;
 
+use cgmath::Matrix4;
+use cgmath::prelude::*;
+
 use self::gl::types::*;
 
 pub struct Shader {
@@ -39,6 +42,7 @@ impl Shader {
     fn setup_vertex_shader() -> u32 {
         const VERTEX_SHADER_SOURCE: &str = r#"
         #version 330 core
+
         layout (location = 0) in vec3 aPos;
         layout (location = 1) in vec3 aCol;
 
@@ -47,6 +51,7 @@ impl Shader {
         uniform mat4 projection;
 
         out vec3 vCol;
+
         void main() {
            gl_Position = projection * view * model * vec4(aPos, 1.0);
            vCol = aCol;
@@ -66,8 +71,10 @@ impl Shader {
     fn setup_fragment_shader() -> u32 {
         const FRAGMENT_SHADER_SOURCE: &str = r#"
         #version 330 core
+
         in vec3 vCol;
         out vec4 FragColor;
+
         void main() {
            FragColor = vec4(vCol, 1.0);
         }
@@ -102,4 +109,9 @@ impl Shader {
         }
     }
 
+    pub unsafe fn set_mat4(&self, name: &str, mat: &Matrix4<f32>) {
+        let c_name= CString::new(name).unwrap();
+        let location = gl::GetUniformLocation(self.id, c_name.as_ptr());
+        gl::UniformMatrix4fv(location, 1, gl::FALSE, mat.as_ptr());
+    }
 }

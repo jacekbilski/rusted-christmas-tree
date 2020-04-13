@@ -1,6 +1,5 @@
 extern crate gl;
 
-use std::ffi::CString;
 use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
@@ -104,25 +103,15 @@ impl Drawable for Ground {
         unsafe {
             gl::UseProgram(self.shader.id);
 
-            self.set_uniform_matrix("model", Matrix4::identity());
+            self.shader.set_mat4("model", &Matrix4::identity() as &Matrix4<f32>);
             let view: Matrix4<f32> = Matrix4::look_at(Point3::new(15., 12., 12.), Point3::new(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
-            self.set_uniform_matrix("view", view);
+            self.shader.set_mat4("view", &view);
             let projection = perspective(Deg(45.0), 1920 as f32 / 1080 as f32, 0.1, 100.0);
-            self.set_uniform_matrix("projection", projection);
+            self.shader.set_mat4("projection", &projection);
 
             gl::BindVertexArray(self.vao);
             gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
             gl::BindVertexArray(0);
-        }
-    }
-}
-
-impl Ground {
-    fn set_uniform_matrix(&self, name: &str, matrix: Matrix4<f32>) {
-        unsafe {
-            let c_name= CString::new(name).unwrap();
-            let location = gl::GetUniformLocation(self.shader.id, c_name.as_ptr());
-            gl::UniformMatrix4fv(location, 1, gl::FALSE, matrix.as_ptr());
         }
     }
 }
