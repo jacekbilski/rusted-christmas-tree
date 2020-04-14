@@ -21,7 +21,7 @@ type EBO = u32;
 pub struct Tree {
     shader: Shader,
     vao: VAO,
-    indices: [u32; 60],
+    indices: Vec<u32>,
 }
 
 impl Tree {
@@ -31,29 +31,8 @@ impl Tree {
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
         // HINT: type annotation is crucial since default for float literals is f64
-        let vertices: Vec<f32> = Tree::gen_vertices();
-        let indices: [u32; 60] = [
-            0, 1, 2,
-            0, 2, 3,
-            0, 3, 4,
-            0, 4, 5,
-            0, 5, 6,
-            0, 6, 7,
-            0, 7, 8,
-            0, 8, 9,
-            0, 9, 10,
-            0, 10, 11,
-            0, 11, 12,
-            0, 12, 13,
-            0, 13, 14,
-            0, 14, 15,
-            0, 15, 16,
-            0, 16, 17,
-            0, 17, 18,
-            0, 18, 19,
-            0, 19, 20,
-            0, 20, 1,
-        ];
+        let vertices = Tree::gen_vertices();
+        let indices = Tree::gen_indices();
 
         let within_vao = || {
             Tree::create_vbo(&vertices);
@@ -83,6 +62,17 @@ impl Tree {
             vertices.extend(normal.iter());
         }
         vertices
+    }
+
+    fn gen_indices() -> Vec<u32> {
+        let slices = 20 as u32;
+        let mut indices: Vec<u32> = Vec::with_capacity(3 * (slices + 1) as usize);
+        for i in 1..slices+1 {
+            indices.extend([0, i, i+1].iter());
+        }
+        indices.extend([0, slices, 1].iter());
+        indices
+
     }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
