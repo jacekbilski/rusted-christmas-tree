@@ -5,15 +5,15 @@ use std::boxed::Box;
 use std::sync::mpsc::Receiver;
 
 use drawable::Drawable;
-use fps_calculator::FpsCalculator;
-use observer::RenderLoopObserver;
+// use fps_calculator::FpsCalculator;
+// use observer::RenderLoopObserver;
 use xmas_tree::XmasTree;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
 mod drawable;
-mod fps_calculator;
-mod observer;
+// mod fps_calculator;
+// mod observer;
 mod shader;
 mod xmas_tree;
 
@@ -32,6 +32,7 @@ fn main() {
 
     unsafe {
         gl::Enable(gl::MULTISAMPLE);
+        gl::Enable(gl::DEPTH_TEST);
     }
 
     let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
@@ -63,7 +64,7 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
 fn render(window: &mut Window, obj: &Box<dyn Drawable>) {
     unsafe {
         gl::ClearColor(0.2, 0.3, 0.3, 1.0);
-        gl::Clear(gl::COLOR_BUFFER_BIT);
+        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
         obj.draw(window);
     }
 }
