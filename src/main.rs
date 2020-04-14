@@ -7,14 +7,12 @@ use std::sync::mpsc::Receiver;
 use std::time::Instant;
 
 use drawable::Drawable;
-use triangle::Triangle;
 use xmas_tree::Ground;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
 mod drawable;
 mod shader;
-mod triangle;
 mod xmas_tree;
 
 // settings
@@ -36,7 +34,6 @@ fn main() {
     }
 
     let obj: Box<dyn Drawable> = Box::new(Ground::setup());
-    // let obj: Box<dyn Drawable> = Box::new(Triangle::setup());
 
     let mut frame_times: VecDeque<Instant> = VecDeque::with_capacity(FPS_ARRAY_SIZE);
     frame_times.push_back(Instant::now());
