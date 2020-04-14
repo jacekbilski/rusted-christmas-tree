@@ -45,27 +45,38 @@ impl Tree {
 
     fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
         let slices = 20 as u32;
-        let radius: f32 = 4.;
-        let angle_diff = PI * 2. / slices as f32;
         let colour: [f32; 3] = [0., 1., 0.];
-        let normal: [f32; 3] = vec3(0., 1., 0.).into();
 
         let mut vertices: Vec<f32> = Vec::with_capacity(9 * (slices + 1) as usize);
         let mut indices: Vec<u32> = Vec::with_capacity(3 * (slices + 1) as usize);
 
-        vertices.extend([0., 2., 0.].iter());
+        // lower segment
+        Tree::gen_tree_segment(slices, colour, &mut vertices, &mut indices, 4., 0, -3., 5.);
+
+        // middle segment
+        Tree::gen_tree_segment(slices, colour, &mut vertices, &mut indices, 3., 1, 0., 3.);
+
+        // upper segment
+        Tree::gen_tree_segment(slices, colour, &mut vertices, &mut indices, 2., 2, 2., 2.);
+        (vertices, indices)
+    }
+
+    fn gen_tree_segment(slices: u32, colour: [f32; 3], vertices: &mut Vec<f32>, indices: &mut Vec<u32>, radius: f32, segment: u32, segment_bottom: f32, segment_height: f32) {
+        let angle_diff = PI * 2. / slices as f32;
+        let normal: [f32; 3] = vec3(0., 1., 0.).into();
+        let indices_offset = segment * (slices + 1);
+        vertices.extend([0., segment_bottom + segment_height, 0.].iter());
         vertices.extend(colour.iter());
         vertices.extend(normal.iter());
         for i in 0..slices {
             let angle = angle_diff * i as f32;
-            vertices.extend([radius * angle.sin(), -3., radius * angle.cos()].iter());
+            vertices.extend([radius * angle.sin(), segment_bottom, radius * angle.cos()].iter());
             vertices.extend(colour.iter());
             vertices.extend(normal.iter());
 
-            indices.extend([0, i+1, i+2].iter());
+            indices.extend([indices_offset, indices_offset + i + 1, indices_offset + i + 2].iter());
         }
-        indices.extend([0, slices, 1].iter());
-        (vertices, indices)
+        indices.extend([indices_offset, indices_offset + slices, indices_offset + 1].iter());
     }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {

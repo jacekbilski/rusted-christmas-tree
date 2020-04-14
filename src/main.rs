@@ -5,15 +5,15 @@ use std::boxed::Box;
 use std::sync::mpsc::Receiver;
 
 use drawable::Drawable;
-// use fps_calculator::FpsCalculator;
-// use observer::RenderLoopObserver;
+use fps_calculator::FpsCalculator;
+use observer::RenderLoopObserver;
 use xmas_tree::XmasTree;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
 mod drawable;
-// mod fps_calculator;
-// mod observer;
+mod fps_calculator;
+mod observer;
 mod shader;
 mod xmas_tree;
 
