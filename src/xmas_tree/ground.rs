@@ -30,8 +30,8 @@ impl Ground {
         // HINT: type annotation is crucial since default for float literals is f64
         let vertices: [f32; 36] = [ // position, colour, normal vector
             -10., 0., -10., 1., 1., 1., 0., 1., 0., // far
-            -10., 0., 10., 0., 1., 1., 0., 1., 0., // left
-            10., 0., -10., 1., 1., 0., 0., 1., 0., // right
+            -10., 0., 10., 1., 1., 1., 0., 1., 0., // left
+            10., 0., -10., 1., 1., 1., 0., 1., 0., // right
             10., 0., 10., 1., 1., 1., 0., 1., 0., // near
         ];
         let indices: [u32; 6] = [
@@ -106,13 +106,15 @@ impl Ground {
 impl Drawable for Ground {
     fn draw(&self) {
         unsafe {
+            let camera_position = Point3::new(15., 12., 12.);
             gl::UseProgram(self.shader.id);
             self.shader.set_vec3("lightColour", &vec3(1., 1., 1.));
             // self.shader.set_vec3("lightPosition", &vec3(10., 100., 10.));
             self.shader.set_vec3("lightPosition", &vec3(5., 6., 2.));
+            self.shader.set_vec3("cameraPosition", &camera_position.to_vec());
 
             self.shader.set_mat4("model", &Matrix4::identity() as &Matrix4<f32>);
-            let view: Matrix4<f32> = Matrix4::look_at(Point3::new(15., 12., 12.), Point3::new(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
+            let view: Matrix4<f32> = Matrix4::look_at(camera_position, Point3::new(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
             self.shader.set_mat4("view", &view);
             let projection = perspective(Deg(45.0), 1920 as f32 / 1080 as f32, 0.1, 100.0);
             self.shader.set_mat4("projection", &projection);

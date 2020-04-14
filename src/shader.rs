@@ -83,10 +83,12 @@ impl Shader {
 
         uniform vec3 lightColour;
         uniform vec3 lightPosition;
+        uniform vec3 cameraPosition;
 
         out vec4 FragColor;
 
         const float ambientStrength = 0.1;
+        const float specularStrength = 0.5;
 
         void main() {
             vec3 ambient = ambientStrength * lightColour;
@@ -96,7 +98,12 @@ impl Shader {
             float diff = max(dot(norm, lightDir), 0.0);
             vec3 diffuse = diff * lightColour;
 
-            FragColor = vec4((ambient + diffuse) * Colour, 1.0);
+            vec3 viewDir = normalize(cameraPosition - FragPosition);
+            vec3 reflectDir = reflect(-lightDir, norm);
+            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+            vec3 specular = specularStrength * spec * lightColour;
+
+            FragColor = vec4((ambient + diffuse + specular) * Colour, 1.0);
         }
     "#;
 
