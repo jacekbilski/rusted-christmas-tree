@@ -1,5 +1,6 @@
 extern crate gl;
 
+use core::f32::consts::PI;
 use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
@@ -17,37 +18,71 @@ type VBO = u32;
 type VAO = u32;
 type EBO = u32;
 
-pub struct Ground {
+pub struct Tree {
     shader: Shader,
     vao: VAO,
+    indices: [u32; 60],
 }
 
-impl Ground {
+impl Tree {
     pub fn setup() -> Self {
         let shader = Shader::new();
 
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
         // HINT: type annotation is crucial since default for float literals is f64
-        let vertices: [f32; 36] = [ // position, colour, normal vector
-            -10., -5., -10., 1., 1., 1., 0., 1., 0., // far
-            -10., -5., 10., 1., 1., 1., 0., 1., 0., // left
-            10., -5., -10., 1., 1., 1., 0., 1., 0., // right
-            10., -5., 10., 1., 1., 1., 0., 1., 0., // near
-        ];
-        let indices: [u32; 6] = [
-            0, 2, 1,
-            2, 1, 3,
+        let vertices: Vec<f32> = Tree::gen_vertices();
+        let indices: [u32; 60] = [
+            0, 1, 2,
+            0, 2, 3,
+            0, 3, 4,
+            0, 4, 5,
+            0, 5, 6,
+            0, 6, 7,
+            0, 7, 8,
+            0, 8, 9,
+            0, 9, 10,
+            0, 10, 11,
+            0, 11, 12,
+            0, 12, 13,
+            0, 13, 14,
+            0, 14, 15,
+            0, 15, 16,
+            0, 16, 17,
+            0, 17, 18,
+            0, 18, 19,
+            0, 19, 20,
+            0, 20, 1,
         ];
 
         let within_vao = || {
-            Ground::create_vbo(&vertices);
-            Ground::create_ebo(&indices);
+            Tree::create_vbo(&vertices);
+            Tree::create_ebo(&indices);
         };
 
-        let vao = Ground::create_vao(within_vao);
+        let vao = Tree::create_vao(within_vao);
 
-        Ground { shader, vao }
+        Tree { shader, vao, indices }
+    }
+
+    fn gen_vertices() -> Vec<f32> {
+        let slices = 20;
+        let radius: f32 = 4.;
+        let angle_diff = PI * 2. / slices as f32;
+        let mut vertices: Vec<f32> = Vec::with_capacity(9 * (slices + 1));
+        let colour: [f32; 3] = [0., 1., 0.];
+        let normal: [f32; 3] = vec3(0., 1., 0.).into();
+
+        vertices.extend([0., 2., 0.].iter());
+        vertices.extend(colour.iter());
+        vertices.extend(normal.iter());
+        for i in 0..slices {
+            let angle = angle_diff * i as f32;
+            vertices.extend([radius * angle.sin(), -3., radius * angle.cos()].iter());
+            vertices.extend(colour.iter());
+            vertices.extend(normal.iter());
+        }
+        vertices
     }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
@@ -104,7 +139,7 @@ impl Ground {
     }
 }
 
-impl Drawable for Ground {
+impl Drawable for Tree {
     fn draw(&self, window: &mut Window) {
         unsafe {
             let camera_position = Point3::new(15., 12., 12.);
@@ -122,7 +157,7 @@ impl Drawable for Ground {
             self.shader.set_mat4("projection", &projection);
 
             gl::BindVertexArray(self.vao);
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
+            gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
             gl::BindVertexArray(0);
         }
     }
