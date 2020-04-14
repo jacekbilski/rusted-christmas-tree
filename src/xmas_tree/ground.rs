@@ -23,7 +23,7 @@ pub struct Ground {
 }
 
 impl Ground {
-    pub fn setup() -> Ground {
+    pub fn setup() -> Self {
         let shader = Shader::new();
 
         // set up vertex data (and buffer(s)) and configure vertex attributes

@@ -7,7 +7,7 @@ use std::sync::mpsc::Receiver;
 use drawable::Drawable;
 use fps_calculator::FpsCalculator;
 use observer::RenderLoopObserver;
-use xmas_tree::Ground;
+use xmas_tree::XmasTree;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
@@ -34,7 +34,7 @@ fn main() {
         gl::Enable(gl::MULTISAMPLE);
     }
 
-    let obj: Box<dyn Drawable> = Box::new(Ground::setup());
+    let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
     let mut observer = FpsCalculator::new();
 
     // render loop
