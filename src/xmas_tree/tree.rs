@@ -44,7 +44,7 @@ impl Tree {
     }
 
     fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
-        let slices = 20 as u32;
+        let slices = 40 as u32;
         let colour: [f32; 3] = [0., 1., 0.];
 
         let mut vertices: Vec<f32> = Vec::with_capacity(9 * (slices + 1) as usize);
@@ -61,22 +61,31 @@ impl Tree {
         (vertices, indices)
     }
 
-    fn gen_tree_segment(slices: u32, colour: [f32; 3], vertices: &mut Vec<f32>, indices: &mut Vec<u32>, radius: f32, segment: u32, segment_bottom: f32, segment_height: f32) {
+    fn gen_tree_segment(slices: u32, colour: [f32; 3], vertices: &mut Vec<f32>, indices: &mut Vec<u32>, bottom_radius: f32, segment: u32, segment_bottom: f32, segment_height: f32) {
         let angle_diff = PI * 2. / slices as f32;
-        let normal: [f32; 3] = vec3(0., 1., 0.).into();
-        let indices_offset = segment * (slices + 1);
-        vertices.extend([0., segment_bottom + segment_height, 0.].iter());
-        vertices.extend(colour.iter());
-        vertices.extend(normal.iter());
+        let indices_offset = 2 * segment * slices;
+        let upper_radius: f32 = 0.001;
         for i in 0..slices {
-            let angle = angle_diff * i as f32;
-            vertices.extend([radius * angle.sin(), segment_bottom, radius * angle.cos()].iter());
-            vertices.extend(colour.iter());
-            vertices.extend(normal.iter());
+            let bottom_angle = angle_diff * i as f32;
+            let upper_angle = angle_diff * (i as f32 - 0.5);
 
-            indices.extend([indices_offset, indices_offset + i + 1, indices_offset + i + 2].iter());
+            // bottom edge
+            vertices.extend([bottom_radius * bottom_angle.sin(), segment_bottom, bottom_radius * bottom_angle.cos()].iter());
+            vertices.extend(colour.iter());
+            vertices.extend([bottom_angle.sin(), 0.7, bottom_angle.cos()].iter()); // TODO - actually calculate this
+
+            // upper edge
+            vertices.extend([upper_radius * upper_angle.sin(), segment_bottom + segment_height, upper_radius * upper_angle.cos()].iter());
+            vertices.extend(colour.iter());
+            vertices.extend([upper_angle.sin(), segment_bottom + segment_height + 0.7, upper_angle.cos()].iter());  // TODO - actually calculate this
+
+            if i != slices - 1 {
+                indices.extend([indices_offset + 2 * i, indices_offset + 2 * i + 1, indices_offset + 2 * i + 2].iter());
+                indices.extend([indices_offset + 2 * i + 1, indices_offset + 2 * i + 2, indices_offset + 2 * i + 3].iter());
+            }
         }
-        indices.extend([indices_offset, indices_offset + slices, indices_offset + 1].iter());
+        indices.extend([indices_offset + 2 * (slices - 1), indices_offset + 2 * (slices - 1) + 1, indices_offset].iter());
+        indices.extend([indices_offset + 2 * (slices - 1) + 1, indices_offset, indices_offset + 1].iter());
     }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
