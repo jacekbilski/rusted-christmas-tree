@@ -2,23 +2,24 @@ extern crate gl;
 extern crate glfw;
 
 use std::boxed::Box;
-use std::collections::VecDeque;
 use std::sync::mpsc::Receiver;
-use std::time::Instant;
 
 use drawable::Drawable;
+use fps_calculator::FpsCalculator;
+use observer::RenderLoopObserver;
 use xmas_tree::Ground;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
 mod drawable;
+mod fps_calculator;
+mod observer;
 mod shader;
 mod xmas_tree;
 
 // settings
 const SCR_WIDTH: u32 = 1920;
 const SCR_HEIGHT: u32 = 1080;
-const FPS_ARRAY_SIZE: usize = 100;
 
 fn main() {
     // glfw: initialize and configure
@@ -34,9 +35,7 @@ fn main() {
     }
 
     let obj: Box<dyn Drawable> = Box::new(Ground::setup());
-
-    let mut frame_times: VecDeque<Instant> = VecDeque::with_capacity(FPS_ARRAY_SIZE);
-    frame_times.push_back(Instant::now());
+    let mut observer = FpsCalculator::new();
 
     // render loop
     while !window.should_close() {
@@ -44,7 +43,7 @@ fn main() {
         render(&mut window, &obj);
         window.swap_buffers();
         glfw.poll_events();
-        calc_and_print_fps(&mut frame_times);
+        observer.tick();
     }
 }
 
@@ -67,18 +66,6 @@ fn render(window: &mut Window, obj: &Box<dyn Drawable>) {
         gl::Clear(gl::COLOR_BUFFER_BIT);
         obj.draw(window);
     }
-}
-
-fn calc_and_print_fps(frame_times: &mut VecDeque<Instant>) {
-    let earliest_frame = if frame_times.len() == FPS_ARRAY_SIZE {
-        frame_times.pop_front().unwrap()
-    } else {
-        *(frame_times.front().unwrap())
-    };
-    let elapsed = earliest_frame.elapsed();
-    let fps = 1000000.0 * frame_times.len() as f64 / elapsed.as_micros() as f64;
-    println!("FPS: {:?}, elapsed: {:?}", fps, elapsed);
-    frame_times.push_back(Instant::now());
 }
 
 fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>) {
