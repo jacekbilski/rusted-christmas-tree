@@ -41,7 +41,7 @@ fn main() {
     // render loop
     while !window.should_close() {
         process_events(&mut window, &events);
-        render(&obj);
+        render(&mut window, &obj);
         window.swap_buffers();
         glfw.poll_events();
         calc_and_print_fps(&mut frame_times);
@@ -53,7 +53,7 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
     glfw.window_hint(glfw::WindowHint::OpenGlProfile(glfw::OpenGlProfileHint::Core));
     glfw.window_hint(glfw::WindowHint::Samples(Some(4)));
 
-    let (mut window, events) = glfw.create_window(SCR_WIDTH, SCR_HEIGHT, "Rusted Chrsitmas tree", glfw::WindowMode::Windowed)
+    let (mut window, events) = glfw.create_window(SCR_WIDTH, SCR_HEIGHT, "Rusted Christmas tree", glfw::WindowMode::Windowed)
         .expect("Failed to create GLFW window");
     window.make_current();
     window.set_key_polling(true);
@@ -61,11 +61,11 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
     (window, events)
 }
 
-fn render(obj: &Box<dyn Drawable>) {
+fn render(window: &mut Window, obj: &Box<dyn Drawable>) {
     unsafe {
         gl::ClearColor(0.2, 0.3, 0.3, 1.0);
         gl::Clear(gl::COLOR_BUFFER_BIT);
-        obj.draw();
+        obj.draw(window);
     }
 }
 

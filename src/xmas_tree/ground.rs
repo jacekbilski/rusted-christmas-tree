@@ -6,6 +6,7 @@ use std::ptr;
 
 use cgmath::{Deg, Matrix4, perspective, Point3, vec3};
 use cgmath::prelude::*;
+use glfw::Window;
 
 use crate::drawable::Drawable;
 use crate::shader::Shader;
@@ -104,7 +105,7 @@ impl Ground {
 }
 
 impl Drawable for Ground {
-    fn draw(&self) {
+    fn draw(&self, window: &mut Window) {
         unsafe {
             let camera_position = Point3::new(15., 12., 12.);
             gl::UseProgram(self.shader.id);
@@ -116,7 +117,8 @@ impl Drawable for Ground {
             self.shader.set_mat4("model", &Matrix4::identity() as &Matrix4<f32>);
             let view: Matrix4<f32> = Matrix4::look_at(camera_position, Point3::new(0.0, 0.0, 0.0), vec3(0.0, 1.0, 0.0));
             self.shader.set_mat4("view", &view);
-            let projection = perspective(Deg(45.0), 1920 as f32 / 1080 as f32, 0.1, 100.0);
+            let (width, height) = window.get_size();
+            let projection = perspective(Deg(45.0), width as f32 / height as f32, 0.1, 100.0);
             self.shader.set_mat4("projection", &projection);
 
             gl::BindVertexArray(self.vao);
