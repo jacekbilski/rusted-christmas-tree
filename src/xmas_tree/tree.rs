@@ -31,8 +31,7 @@ impl Tree {
         // set up vertex data (and buffer(s)) and configure vertex attributes
         // ------------------------------------------------------------------
         // HINT: type annotation is crucial since default for float literals is f64
-        let vertices = Tree::gen_vertices();
-        let indices = Tree::gen_indices();
+        let (vertices, indices) = Tree::gen_vertices();
 
         let within_vao = || {
             Tree::create_vbo(&vertices);
@@ -44,13 +43,15 @@ impl Tree {
         Tree { shader, vao, indices }
     }
 
-    fn gen_vertices() -> Vec<f32> {
-        let slices = 20;
+    fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
+        let slices = 20 as u32;
         let radius: f32 = 4.;
         let angle_diff = PI * 2. / slices as f32;
-        let mut vertices: Vec<f32> = Vec::with_capacity(9 * (slices + 1));
         let colour: [f32; 3] = [0., 1., 0.];
         let normal: [f32; 3] = vec3(0., 1., 0.).into();
+
+        let mut vertices: Vec<f32> = Vec::with_capacity(9 * (slices + 1) as usize);
+        let mut indices: Vec<u32> = Vec::with_capacity(3 * (slices + 1) as usize);
 
         vertices.extend([0., 2., 0.].iter());
         vertices.extend(colour.iter());
@@ -60,19 +61,11 @@ impl Tree {
             vertices.extend([radius * angle.sin(), -3., radius * angle.cos()].iter());
             vertices.extend(colour.iter());
             vertices.extend(normal.iter());
-        }
-        vertices
-    }
 
-    fn gen_indices() -> Vec<u32> {
-        let slices = 20 as u32;
-        let mut indices: Vec<u32> = Vec::with_capacity(3 * (slices + 1) as usize);
-        for i in 1..slices+1 {
-            indices.extend([0, i, i+1].iter());
+            indices.extend([0, i+1, i+2].iter());
         }
         indices.extend([0, slices, 1].iter());
-        indices
-
+        (vertices, indices)
     }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
