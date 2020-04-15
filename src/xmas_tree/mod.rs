@@ -2,11 +2,9 @@ use cgmath::{Deg, Matrix4, perspective, Point3, vec3};
 use cgmath::prelude::*;
 use glfw::Window;
 
-use ground::Ground;
-use tree::Tree;
-
 use crate::drawable::Drawable;
 use crate::shader::Shader;
+use crate::xmas_tree::static_object::StaticObject;
 
 mod static_object;
 mod ground;
@@ -21,8 +19,10 @@ impl XmasTree {
     pub fn setup() -> Self {
         let shader = Shader::new();
         let mut drawables: Vec<Box<dyn Drawable>> = Vec::new();
-        drawables.push(Box::new(Ground::setup()));
-        drawables.push(Box::new(Tree::setup()));
+        let ground = ground::gen_vertices();
+        drawables.push(Box::new(StaticObject::new(ground.0, ground.1)));
+        let tree = tree::gen_vertices();
+        drawables.push(Box::new(StaticObject::new(tree.0, tree.1)));
         XmasTree { shader, drawables }
     }
 }

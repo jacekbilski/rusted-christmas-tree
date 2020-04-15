@@ -4,13 +4,31 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
+use glfw::Window;
+
+use crate::drawable::Drawable;
+
 use self::gl::types::*;
 
 type VBO = u32;
 type VAO = u32;
 type EBO = u32;
 
-pub trait StaticObject {
+pub struct StaticObject {
+    vao: VAO,
+    indices: Vec<u32>,
+}
+
+impl StaticObject {
+    pub fn new(vertices: Vec<f32>, indices: Vec<u32>) -> Self {
+        let within_vao = || {
+            Self::create_vbo(&vertices);
+            Self::create_ebo(&indices);
+        };
+        let vao = Self::create_vao(within_vao);
+
+        Self { vao, indices }
+    }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
         unsafe {
@@ -62,6 +80,16 @@ pub trait StaticObject {
                            (indices.len() * mem::size_of::<GLuint>()) as GLsizeiptr,
                            &indices[0] as *const u32 as *const c_void,
                            gl::STATIC_DRAW); // actually fill ELEMENT_ARRAY_BUFFER with data
+        }
+    }
+}
+
+impl Drawable for StaticObject {
+    fn draw(&self, _window: &mut Window) {
+        unsafe {
+            gl::BindVertexArray(self.vao);
+            gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
+            gl::BindVertexArray(0);
         }
     }
 }
