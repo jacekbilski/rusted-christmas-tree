@@ -20,34 +20,35 @@ type EBO = u32;
 pub struct Ground {
     shader: Shader,
     vao: VAO,
+    indices: Vec<u32>,
 }
 
 impl Ground {
     pub fn setup() -> Self {
         let shader = Shader::new();
+        let (vertices, indices) = Self::gen_vertices();
+        let within_vao = || {
+            Self::create_vbo(&vertices);
+            Self::create_ebo(&indices);
+        };
+        let vao = Self::create_vao(within_vao);
 
-        // set up vertex data (and buffer(s)) and configure vertex attributes
-        // ------------------------------------------------------------------
-        // HINT: type annotation is crucial since default for float literals is f64
-        let vertices: [f32; 36] = [ // position, colour, normal vector
-            -10., -5., -10., 1., 1., 1., 0., 1., 0., // far
-            -10., -5., 10., 1., 1., 1., 0., 1., 0., // left
-            10., -5., -10., 1., 1., 1., 0., 1., 0., // right
-            10., -5., 10., 1., 1., 1., 0., 1., 0., // near
+        Self { shader, vao, indices }
+    }
+
+    fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
+        let vertices: Vec<f32> = vec![ // position, colour, normal vector
+           -10., -5., -10., 1., 1., 1., 0., 1., 0., // far
+           -10., -5., 10., 1., 1., 1., 0., 1., 0., // left
+           10., -5., -10., 1., 1., 1., 0., 1., 0., // right
+           10., -5., 10., 1., 1., 1., 0., 1., 0., // near
         ];
-        let indices: [u32; 6] = [
+        let indices: Vec<u32> = vec![
             0, 2, 1,
             2, 1, 3,
         ];
 
-        let within_vao = || {
-            Ground::create_vbo(&vertices);
-            Ground::create_ebo(&indices);
-        };
-
-        let vao = Ground::create_vao(within_vao);
-
-        Ground { shader, vao }
+        (vertices, indices)
     }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
@@ -122,7 +123,7 @@ impl Drawable for Ground {
             self.shader.set_mat4("projection", &projection);
 
             gl::BindVertexArray(self.vao);
-            gl::DrawElements(gl::TRIANGLES, 6, gl::UNSIGNED_INT, ptr::null());
+            gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
             gl::BindVertexArray(0);
         }
     }

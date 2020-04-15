@@ -27,20 +27,14 @@ pub struct Tree {
 impl Tree {
     pub fn setup() -> Self {
         let shader = Shader::new();
-
-        // set up vertex data (and buffer(s)) and configure vertex attributes
-        // ------------------------------------------------------------------
-        // HINT: type annotation is crucial since default for float literals is f64
-        let (vertices, indices) = Tree::gen_vertices();
-
+        let (vertices, indices) = Self::gen_vertices();
         let within_vao = || {
-            Tree::create_vbo(&vertices);
-            Tree::create_ebo(&indices);
+            Self::create_vbo(&vertices);
+            Self::create_ebo(&indices);
         };
+        let vao = Self::create_vao(within_vao);
 
-        let vao = Tree::create_vao(within_vao);
-
-        Tree { shader, vao, indices }
+        Self { shader, vao, indices }
     }
 
     fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
@@ -58,6 +52,7 @@ impl Tree {
 
         // upper segment
         Tree::gen_tree_segment(slices, colour, &mut vertices, &mut indices, 2., 2, 2., 2.);
+
         (vertices, indices)
     }
 
