@@ -67,15 +67,22 @@ impl Tree {
         for i in 0..slices {
             let bottom_angle = angle_diff * i as f32;
 
-            // bottom edge
-            vertices.extend([bottom_radius * bottom_angle.sin(), segment_bottom, bottom_radius * bottom_angle.cos()].iter());
-            vertices.extend(colour.iter());
-            vertices.extend([bottom_angle.sin(), 0.7, bottom_angle.cos()].iter()); // TODO - actually calculate this
+            let bottom_vertex = Point3::new(bottom_radius * bottom_angle.sin(), segment_bottom, bottom_radius * bottom_angle.cos());
+            let upper_vertex = Point3::new(0., segment_bottom + segment_height, 0.);
+            let next_bottom_vertex = Point3::new(bottom_radius * (bottom_angle + angle_diff).sin(), segment_bottom, bottom_radius * (bottom_angle + angle_diff).cos());
+            let vec_1 = next_bottom_vertex - bottom_vertex;
+            let vec_2 = upper_vertex - bottom_vertex;
+            let normal: [f32; 3] = vec_1.cross(vec_2).into();
 
-            // upper edge
-            vertices.extend([0., segment_bottom + segment_height, 0.].iter());
+            let bottom_vertex_arr: [f32; 3] = bottom_vertex.into();
+            vertices.extend(bottom_vertex_arr.iter());
             vertices.extend(colour.iter());
-            vertices.extend([bottom_angle.sin(), 0.7, bottom_angle.cos()].iter()); // TODO - actually calculate this
+            vertices.extend(normal.iter());
+
+            let upper_vertex_arr: [f32; 3] = upper_vertex.into();
+            vertices.extend(upper_vertex_arr.iter());
+            vertices.extend(colour.iter());
+            vertices.extend(normal.iter());
 
             if i != slices - 1 {
                 indices.extend([indices_offset + 2 * i, indices_offset + 2 * i + 1, indices_offset + 2 * i + 2].iter());
