@@ -2,7 +2,7 @@ use core::f32::consts::PI;
 
 use cgmath::Point3;
 
-struct Bomb {
+struct Bauble {
     center: Point3<f32>,
     colour: [f32; 3],
 }
@@ -14,16 +14,16 @@ pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
     let red: [f32; 3] = [1., 0., 0.];
     let yellow: [f32; 3] = [1., 1., 0.];
 
-    let bombs: [Bomb; 2] = [
-        Bomb {center: Point3::new(0., 4.2, 0.), colour: red},
-        Bomb {center: Point3::new(1., 3., 1.), colour: yellow},
+    let baubles: [Bauble; 2] = [
+        Bauble {center: Point3::new(0., 4.2, 0.), colour: red},
+        Bauble {center: Point3::new(1., 3., 1.), colour: yellow},
     ];
 
     let mut vertices: Vec<f32> = Vec::with_capacity(9 * 2 * precision.pow(2) as usize);
     let mut indices: Vec<u32> = Vec::with_capacity(3 * 4 * precision.pow(2) as usize);
 
-    for i in 0..bombs.len() {
-        gen_sphere(&mut vertices, &mut indices, bombs[i].center, radius, precision, &bombs[i].colour);
+    for i in 0..baubles.len() {
+        gen_sphere(&mut vertices, &mut indices, baubles[i].center, radius, precision, &baubles[i].colour);
     }
 
     // println!("Vertices: {:?}", &vertices);
