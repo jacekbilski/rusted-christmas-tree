@@ -21,15 +21,15 @@ pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
     (vertices, indices)
 }
 
-fn gen_tree_segment(slices: u32, colour: [f32; 3], vertices: &mut Vec<f32>, indices: &mut Vec<u32>, bottom_radius: f32, segment: u32, segment_bottom: f32, segment_height: f32) {
+fn gen_tree_segment(slices: u32, colour: [f32; 3], vertices: &mut Vec<f32>, indices: &mut Vec<u32>, radius: f32, segment: u32, segments_bottom: f32, segments_height: f32) {
     let angle_diff = PI * 2. / slices as f32;
     let indices_offset = 2 * segment * slices;
     for i in 0..slices {
-        let bottom_angle = angle_diff * i as f32;
+        let angle = angle_diff * i as f32;
 
-        let bottom_vertex = Point3::new(bottom_radius * bottom_angle.sin(), segment_bottom, bottom_radius * bottom_angle.cos());
-        let upper_vertex = Point3::new(0., segment_bottom + segment_height, 0.);
-        let next_bottom_vertex = Point3::new(bottom_radius * (bottom_angle + angle_diff).sin(), segment_bottom, bottom_radius * (bottom_angle + angle_diff).cos());
+        let bottom_vertex = Point3::new(radius * angle.sin(), segments_bottom, radius * angle.cos());
+        let upper_vertex = Point3::new(0., segments_bottom + segments_height, 0.);
+        let next_bottom_vertex = Point3::new(radius * (angle + angle_diff).sin(), segments_bottom, radius * (angle + angle_diff).cos());
         let vec_1 = next_bottom_vertex - bottom_vertex;
         let vec_2 = upper_vertex - bottom_vertex;
         let normal: [f32; 3] = vec_1.cross(vec_2).into();
