@@ -17,7 +17,7 @@ pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
     (vertices, indices)
 }
 
-fn gen_sphere(center: Point3<f32>, radius: f32, precision: u8, colour: &[f32; 3], vertices: &mut Vec<f32>, indices: &mut Vec<u32>) {
+fn gen_sphere(center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3], vertices: &mut Vec<f32>, indices: &mut Vec<u32>) {
     let angle_diff = PI / precision as f32;
 
     // first layer is special, it's built out of triangles, not trapezoids
@@ -40,12 +40,10 @@ fn gen_sphere(center: Point3<f32>, radius: f32, precision: u8, colour: &[f32; 3]
             vertices.extend([h_angle.sin(), 0., h_angle.cos()].iter());
         }
 
-        // for slice in 0..2 * precision - 1 {
-        indices.extend([0, 4, 5].iter());
-        indices.extend([1, 5, 6].iter());
-        indices.extend([2, 6, 7].iter());
-        // }
-        indices.extend([3, 7, 4].iter());
+        for slice in 0..2 * precision - 1 {
+            indices.extend([(layer - 1) * 2 * precision + slice, layer * 2 * precision + slice, layer * 2 * precision + slice + 1].iter());
+        }
+        indices.extend([(layer - 1) * 2 * precision + (2 * precision - 1), layer * 2 * precision + (2 * precision - 1), layer * 2 * precision].iter());
     }
 
     // last layer is also special, it's built out of triangles, not trapezoids
@@ -54,10 +52,9 @@ fn gen_sphere(center: Point3<f32>, radius: f32, precision: u8, colour: &[f32; 3]
         vertices.extend(colour.iter());
         vertices.extend([0., -1., 0.].iter());
     }
-    // for slice in 0..2*precision {
-    // }
-    indices.extend([4, 5, 8].iter());
-    indices.extend([5, 6, 9].iter());
-    indices.extend([6, 7, 10].iter());
-    indices.extend([7, 4, 11].iter());
+    let layer = precision;
+    for slice in 0..2 * precision - 1 {
+        indices.extend([(layer - 1) * 2 * precision + slice, (layer - 1) * 2 * precision + slice + 1, layer * 2 * precision + slice].iter());
+    }
+    indices.extend([(layer - 1) * 2 * precision + (2 * precision - 1), (layer - 1) * 2 * precision, layer * 2 * precision + (2 * precision - 1)].iter());
 }
