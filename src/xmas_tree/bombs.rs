@@ -29,15 +29,15 @@ fn gen_sphere(center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3
     // no indices yet, I'm adding them after adding all vertices from a given layer
 
     for layer in 1..precision {
-        // let v_angle = angle_diff * layer as f32;   // vertically I'm doing only half rotation
+        let v_angle = angle_diff * layer as f32;   // vertically I'm doing only half rotation
         for slice in 0..(2 * precision) {
             let h_angle = angle_diff * slice as f32;   // horizontally I'm doing full circle
-            let vertex = Point3::new(center.x + radius * h_angle.sin(), center.y, center.z + radius * h_angle.cos());
+            let vertex = Point3::new(center.x + radius * h_angle.sin(), center.y + radius * v_angle.cos(), center.z + radius * h_angle.cos());
 
             let vertex_arr: [f32; 3] = vertex.into();
             vertices.extend(vertex_arr.iter());
             vertices.extend(colour.iter());
-            vertices.extend([h_angle.sin(), 0., h_angle.cos()].iter());
+            vertices.extend([h_angle.sin(), v_angle.cos(), h_angle.cos()].iter());
         }
 
         for slice in 0..2 * precision - 1 {
