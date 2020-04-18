@@ -49,21 +49,14 @@ pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
 }
 
 fn gen_sphere(vertices: &mut Vec<f32>, indices: &mut Vec<u32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
-    let vertices_offset = vertices.len() / 9;
+    let vertices_offset= vertices.len() / 9;
+    gen_vertices(vertices, center, radius, precision, colour);
+    gen_indices(indices, precision, vertices_offset)
+}
+
+fn gen_vertices(vertices: &mut Vec<f32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
     let angle_diff = PI / precision as f32;
-    let find_index = |layer: u32, slice: u32| {
-        vertices_offset as u32 + layer * 2 * precision + slice % (2 * precision)
-    };
-
-    // first layer is special, it's built out of triangles, not trapezoids
-    for _slice in 0..2 * precision {
-        vertices.extend([center.x, center.y + radius, center.z].iter());
-        vertices.extend(colour.iter());
-        vertices.extend([0., 1., 0.].iter());
-    }
-    // no indices yet, I'm adding them after adding all vertices from a given layer
-
-    for layer in 1..precision {
+    for layer in 0..=precision {
         let v_angle = angle_diff * layer as f32;   // vertically I'm doing only half rotation
         for slice in 0..(2 * precision) {
             let h_angle = angle_diff * slice as f32;   // horizontally I'm doing full circle
@@ -75,23 +68,32 @@ fn gen_sphere(vertices: &mut Vec<f32>, indices: &mut Vec<u32>, center: Point3<f3
             vertices.extend(colour.iter());
             vertices.extend([h_angle.sin(), v_angle.cos(), h_angle.cos()].iter());
         }
+    }
+}
 
+fn gen_indices(indices: &mut Vec<u32>, precision: u32, vertices_offset: usize) {
+    let find_index = |layer: u32, slice: u32| {
+        vertices_offset as u32 + layer * 2 * precision + slice % (2 * precision)
+    };
+
+    // I'm generating indices for triangles drawn between this and previous layers of vertices
+    let mut layer = 1;
+    for slice in 0..2 * precision {
+        // first layer has only triangles
+        indices.extend([find_index(layer - 1, slice), find_index(layer, slice), find_index(layer, slice + 1)].iter());
+    }
+
+    for layer in 2..precision {
         for slice in 0..2 * precision {
+            // midddle layers are actually traapezoids, I need two triangles per slice
             indices.extend([find_index(layer - 1, slice), find_index(layer, slice), find_index(layer, slice + 1)].iter());
-            if layer != 1 {
-                indices.extend([find_index(layer - 1, slice), find_index(layer - 1, slice + 1), find_index(layer, slice + 1)].iter());
-            }
+            indices.extend([find_index(layer - 1, slice), find_index(layer - 1, slice + 1), find_index(layer, slice + 1)].iter());
         }
     }
 
-    // last layer is also special, it's built out of triangles, not trapezoids
-    for _slice in 0..2 * precision {
-        vertices.extend([center.x, center.y - radius, center.z].iter());
-        vertices.extend(colour.iter());
-        vertices.extend([0., -1., 0.].iter());
-    }
-    let layer = precision;
+    layer = precision;
     for slice in 0..2 * precision {
+        // last layer has only triangles
         indices.extend([find_index(layer - 1, slice), find_index(layer - 1, slice + 1), find_index(layer, slice)].iter());
     }
 }
