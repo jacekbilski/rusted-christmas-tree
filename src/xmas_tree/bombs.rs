@@ -2,18 +2,29 @@ use core::f32::consts::PI;
 
 use cgmath::Point3;
 
+struct Bomb {
+    center: Point3<f32>,
+    colour: [f32; 3],
+}
+
 pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
     let precision = 8 as u32;
-    let radius = 0.3 as f32;
+    let radius = 0.2 as f32;
 
     let red: [f32; 3] = [1., 0., 0.];
     let yellow: [f32; 3] = [1., 1., 0.];
 
+    let bombs: [Bomb; 2] = [
+        Bomb {center: Point3::new(0., 4.2, 0.), colour: red},
+        Bomb {center: Point3::new(1., 3., 1.), colour: yellow},
+    ];
+
     let mut vertices: Vec<f32> = Vec::with_capacity(9 * 2 * precision.pow(2) as usize);
     let mut indices: Vec<u32> = Vec::with_capacity(3 * 4 * precision.pow(2) as usize);
 
-    gen_sphere(&mut vertices, &mut indices, Point3::new(0., 4.2, 0.), radius, precision, &red);
-    gen_sphere(&mut vertices, &mut indices, Point3::new(1., 3., 1.), radius, precision, &yellow);
+    for i in 0..bombs.len() {
+        gen_sphere(&mut vertices, &mut indices, bombs[i].center, radius, precision, &bombs[i].colour);
+    }
 
     // println!("Vertices: {:?}", &vertices);
     // println!("Indices: {:?}", &indices);
@@ -28,7 +39,7 @@ fn gen_sphere(vertices: &mut Vec<f32>, indices: &mut Vec<u32>, center: Point3<f3
     };
 
     // first layer is special, it's built out of triangles, not trapezoids
-    for slice in 0..2 * precision {
+    for _slice in 0..2 * precision {
         vertices.extend([center.x, center.y + radius, center.z].iter());
         vertices.extend(colour.iter());
         vertices.extend([0., 1., 0.].iter());
@@ -57,7 +68,7 @@ fn gen_sphere(vertices: &mut Vec<f32>, indices: &mut Vec<u32>, center: Point3<f3
     }
 
     // last layer is also special, it's built out of triangles, not trapezoids
-    for slice in 0..2 * precision {
+    for _slice in 0..2 * precision {
         vertices.extend([center.x, center.y - radius, center.z].iter());
         vertices.extend(colour.iter());
         vertices.extend([0., -1., 0.].iter());
