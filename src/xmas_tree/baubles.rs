@@ -7,7 +7,7 @@ struct Bauble {
     colour: [f32; 3],
 }
 
-pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
+pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
     let precision = 8 as u32;
     let radius = 0.2 as f32;
 
@@ -43,20 +43,25 @@ pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
         gen_sphere(&mut vertices, &mut indices, baubles[i].center, radius, precision, &baubles[i].colour);
     }
 
-    // println!("Vertices: {:?}", &vertices);
+    // println!("Vertices, len: '{}', data: {:?}", vertices.len(), &vertices);
     // println!("Indices: {:?}", &indices);
     (vertices, indices)
 }
 
 fn gen_sphere(vertices: &mut Vec<f32>, indices: &mut Vec<u32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
-    let vertices_offset= vertices.len() / 9;
+    let vertices_offset = vertices.len() / 9;
     gen_vertices(vertices, center, radius, precision, colour);
     gen_indices(indices, precision, vertices_offset)
 }
 
 fn gen_vertices(vertices: &mut Vec<f32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
     let angle_diff = PI / precision as f32;
-    for layer in 0..=precision {
+
+    vertices.extend([center.x, center.y + radius, center.z].iter());
+    vertices.extend(colour.iter());
+    vertices.extend([0., 1., 0.].iter());
+
+    for layer in 1..precision {
         let v_angle = angle_diff * layer as f32;   // vertically I'm doing only half rotation
         for slice in 0..(2 * precision) {
             let h_angle = angle_diff * slice as f32;   // horizontally I'm doing full circle
@@ -69,11 +74,22 @@ fn gen_vertices(vertices: &mut Vec<f32>, center: Point3<f32>, radius: f32, preci
             vertices.extend([h_angle.sin(), v_angle.cos(), h_angle.cos()].iter());
         }
     }
+
+    vertices.extend([center.x, center.y - radius, center.z].iter());
+    vertices.extend(colour.iter());
+    vertices.extend([0., -1., 0.].iter());
 }
 
 fn gen_indices(indices: &mut Vec<u32>, precision: u32, vertices_offset: usize) {
     let find_index = |layer: u32, slice: u32| {
-        vertices_offset as u32 + layer * 2 * precision + slice % (2 * precision)
+        // layers 0 and precision have only 1 vertex
+        if layer == 0 {
+            vertices_offset as u32
+        } else if layer == precision {
+            vertices_offset as u32 + (layer - 1) * 2 * precision + 1
+        } else {
+            vertices_offset as u32 + (layer - 1) * 2 * precision + 1 + slice % (2 * precision)
+        }
     };
 
     // I'm generating indices for triangles drawn between this and previous layers of vertices

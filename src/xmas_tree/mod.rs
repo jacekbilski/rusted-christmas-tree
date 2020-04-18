@@ -24,7 +24,7 @@ impl XmasTree {
         drawables.push(Box::new(StaticObject::new(ground.0, ground.1)));
         let tree = tree::gen_vertices();
         drawables.push(Box::new(StaticObject::new(tree.0, tree.1)));
-        let baubles = baubles::gen_vertices();
+        let baubles = baubles::gen_objects();
         drawables.push(Box::new(StaticObject::new(baubles.0, baubles.1)));
         XmasTree { shader, drawables }
     }
