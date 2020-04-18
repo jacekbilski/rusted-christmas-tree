@@ -3,13 +3,17 @@ use core::f32::consts::PI;
 use cgmath::Point3;
 
 pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
-    let slices = 40 as u32;
+    let precision = 8 as u32;
+    let radius = 0.3 as f32;
+
     let red: [f32; 3] = [1., 0., 0.];
+    let yellow: [f32; 3] = [1., 1., 0.];
 
-    let mut vertices: Vec<f32> = Vec::with_capacity(9 * (slices + 1) as usize);
-    let mut indices: Vec<u32> = Vec::with_capacity(3 * (slices + 1) as usize);
+    let mut vertices: Vec<f32> = Vec::with_capacity(9 * 2 * precision.pow(2) as usize);
+    let mut indices: Vec<u32> = Vec::with_capacity(3 * 4 * precision.pow(2) as usize);
 
-    gen_sphere(&mut vertices, &mut indices, Point3::new(0., 4.2, 0.), 0.3, 8, &red);
+    gen_sphere(&mut vertices, &mut indices, Point3::new(0., 4.2, 0.), radius, precision, &red);
+    gen_sphere(&mut vertices, &mut indices, Point3::new(1., 3., 1.), radius, precision, &yellow);
 
     // println!("Vertices: {:?}", &vertices);
     // println!("Indices: {:?}", &indices);
@@ -17,9 +21,10 @@ pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
 }
 
 fn gen_sphere(vertices: &mut Vec<f32>, indices: &mut Vec<u32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
+    let vertices_offset = vertices.len() / 9;
     let angle_diff = PI / precision as f32;
     let find_index = |layer: u32, slice: u32| {
-        layer * 2 * precision + slice.rem_euclid(2 * precision)
+        vertices_offset as u32 + layer * 2 * precision + slice % (2 * precision)
     };
 
     // first layer is special, it's built out of triangles, not trapezoids
