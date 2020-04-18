@@ -7,6 +7,7 @@ use crate::shader::Shader;
 use crate::xmas_tree::static_object::StaticObject;
 
 mod static_object;
+mod bombs;
 mod ground;
 mod tree;
 
@@ -23,6 +24,8 @@ impl XmasTree {
         drawables.push(Box::new(StaticObject::new(ground.0, ground.1)));
         let tree = tree::gen_vertices();
         drawables.push(Box::new(StaticObject::new(tree.0, tree.1)));
+        let bombs = bombs::gen_vertices();
+        drawables.push(Box::new(StaticObject::new(bombs.0, bombs.1)));
         XmasTree { shader, drawables }
     }
 }
