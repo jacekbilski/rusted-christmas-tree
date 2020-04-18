@@ -20,9 +20,9 @@ impl XmasTree {
     pub fn setup() -> Self {
         let shader = Shader::new();
         let mut drawables: Vec<Box<dyn Drawable>> = Vec::new();
-        let ground = ground::gen_vertices();
+        let ground = ground::gen_objects();
         drawables.push(Box::new(StaticObject::new(ground.0, ground.1)));
-        let tree = tree::gen_vertices();
+        let tree = tree::gen_objects();
         drawables.push(Box::new(StaticObject::new(tree.0, tree.1)));
         let baubles = baubles::gen_objects();
         drawables.push(Box::new(StaticObject::new(baubles.0, baubles.1)));

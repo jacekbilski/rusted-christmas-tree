@@ -2,7 +2,7 @@ use core::f32::consts::PI;
 
 use cgmath::Point3;
 
-pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
+pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
     let slices = 40 as u32;
     let colour: [f32; 3] = [0., 1., 0.];
 
