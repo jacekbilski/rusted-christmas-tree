@@ -13,10 +13,27 @@ pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
 
     let red: [f32; 3] = [1., 0., 0.];
     let yellow: [f32; 3] = [1., 1., 0.];
+    let blue: [f32; 3] = [0., 0., 1.];
+    let light_blue: [f32; 3] = [0., 1., 1.];
+    let violet: [f32; 3] = [1., 0., 1.];
 
-    let baubles: [Bauble; 2] = [
-        Bauble {center: Point3::new(0., 4.2, 0.), colour: red},
-        Bauble {center: Point3::new(1., 3., 1.), colour: yellow},
+    let baubles: [Bauble; 16] = [
+        Bauble { center: Point3::new(0., 4.2, 0.), colour: red },
+        Bauble { center: Point3::new(1., 3., 1.), colour: yellow },
+        Bauble { center: Point3::new(1.0, 1.0, 2.0), colour: light_blue },
+        Bauble { center: Point3::new(-1.0, 1.0, 2.0), colour: blue },
+        Bauble { center: Point3::new(1.0, 1.0, -2.0), colour: violet },
+        Bauble { center: Point3::new(2.0, 1.0, 0.0), colour: red },
+        Bauble { center: Point3::new(3.0, -1.0, 0.0), colour: blue },
+        Bauble { center: Point3::new(0.0, -1.0, 3.0), colour: yellow },
+        Bauble { center: Point3::new(-3.0, -1.0, 0.0), colour: red },
+        Bauble { center: Point3::new(0.0, -1.0, -3.0), colour: blue },
+        Bauble { center: Point3::new(2.0, -2.0, -3.0), colour: blue },
+        Bauble { center: Point3::new(2.0, -2.0, 3.0), colour: violet },
+        Bauble { center: Point3::new(3.0, -2.0, -2.0), colour: violet },
+        Bauble { center: Point3::new(-3.0, -2.0, -2.0), colour: red },
+        Bauble { center: Point3::new(0.0, -2.0, 4.0), colour: red },
+        Bauble { center: Point3::new(4.0, -2.0, 0.0), colour: yellow }
     ];
 
     let mut vertices: Vec<f32> = Vec::with_capacity(9 * 2 * precision.pow(2) as usize);
