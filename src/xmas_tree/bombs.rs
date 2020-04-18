@@ -10,7 +10,7 @@ pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
     let mut indices: Vec<u32> = Vec::with_capacity(3 * (slices + 1) as usize);
 
     let center = Point3::new(0., 4.2, 0.);
-    gen_sphere(center, 0.2, 2, &colour, &mut vertices, &mut indices);
+    gen_sphere(center, 0.3, 8, &colour, &mut vertices, &mut indices);
 
     // println!("Vertices: {:?}", &vertices);
     // println!("Indices: {:?}", &indices);
@@ -43,8 +43,14 @@ fn gen_sphere(center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3
 
         for slice in 0..2 * precision - 1 {
             indices.extend([(layer - 1) * 2 * precision + slice, layer * 2 * precision + slice, layer * 2 * precision + slice + 1].iter());
+            if layer != 1 {
+                indices.extend([(layer - 1) * 2 * precision + slice, (layer - 1) * 2 * precision + slice + 1, layer * 2 * precision + slice + 1].iter());
+            }
         }
         indices.extend([(layer - 1) * 2 * precision + (2 * precision - 1), layer * 2 * precision + (2 * precision - 1), layer * 2 * precision].iter());
+        if layer != 1 {
+            indices.extend([(layer - 1) * 2 * precision + (2 * precision - 1), layer * 2 * precision, layer * 2 * precision].iter());
+        }
     }
 
     // last layer is also special, it's built out of triangles, not trapezoids
