@@ -4,21 +4,23 @@ use cgmath::Point3;
 
 pub fn gen_vertices() -> (Vec<f32>, Vec<u32>) {
     let slices = 40 as u32;
-    let colour: [f32; 3] = [1., 0.0, 0.0];
+    let red: [f32; 3] = [1., 0., 0.];
 
     let mut vertices: Vec<f32> = Vec::with_capacity(9 * (slices + 1) as usize);
     let mut indices: Vec<u32> = Vec::with_capacity(3 * (slices + 1) as usize);
 
-    let center = Point3::new(0., 4.2, 0.);
-    gen_sphere(center, 0.3, 8, &colour, &mut vertices, &mut indices);
+    gen_sphere(&mut vertices, &mut indices, Point3::new(0., 4.2, 0.), 0.3, 8, &red);
 
     // println!("Vertices: {:?}", &vertices);
     // println!("Indices: {:?}", &indices);
     (vertices, indices)
 }
 
-fn gen_sphere(center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3], vertices: &mut Vec<f32>, indices: &mut Vec<u32>) {
+fn gen_sphere(vertices: &mut Vec<f32>, indices: &mut Vec<u32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
     let angle_diff = PI / precision as f32;
+    let find_index = |layer: u32, slice: u32| {
+        layer * 2 * precision + slice.rem_euclid(2 * precision)
+    };
 
     // first layer is special, it's built out of triangles, not trapezoids
     for slice in 0..2 * precision {
@@ -41,15 +43,11 @@ fn gen_sphere(center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3
             vertices.extend([h_angle.sin(), v_angle.cos(), h_angle.cos()].iter());
         }
 
-        for slice in 0..2 * precision - 1 {
-            indices.extend([(layer - 1) * 2 * precision + slice, layer * 2 * precision + slice, layer * 2 * precision + slice + 1].iter());
+        for slice in 0..2 * precision {
+            indices.extend([find_index(layer - 1, slice), find_index(layer, slice), find_index(layer, slice + 1)].iter());
             if layer != 1 {
-                indices.extend([(layer - 1) * 2 * precision + slice, (layer - 1) * 2 * precision + slice + 1, layer * 2 * precision + slice + 1].iter());
+                indices.extend([find_index(layer - 1, slice), find_index(layer - 1, slice + 1), find_index(layer, slice + 1)].iter());
             }
-        }
-        indices.extend([(layer - 1) * 2 * precision + (2 * precision - 1), layer * 2 * precision + (2 * precision - 1), layer * 2 * precision].iter());
-        if layer != 1 {
-            indices.extend([(layer - 1) * 2 * precision + (2 * precision - 1), layer * 2 * precision, layer * 2 * precision].iter());
         }
     }
 
@@ -60,8 +58,7 @@ fn gen_sphere(center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3
         vertices.extend([0., -1., 0.].iter());
     }
     let layer = precision;
-    for slice in 0..2 * precision - 1 {
-        indices.extend([(layer - 1) * 2 * precision + slice, (layer - 1) * 2 * precision + slice + 1, layer * 2 * precision + slice].iter());
+    for slice in 0..2 * precision {
+        indices.extend([find_index(layer - 1, slice), find_index(layer - 1, slice + 1), find_index(layer, slice)].iter());
     }
-    indices.extend([(layer - 1) * 2 * precision + (2 * precision - 1), (layer - 1) * 2 * precision, layer * 2 * precision + (2 * precision - 1)].iter());
 }
