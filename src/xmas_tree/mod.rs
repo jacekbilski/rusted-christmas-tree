@@ -18,7 +18,7 @@ pub struct XmasTree {
 
 impl XmasTree {
     pub fn setup() -> Self {
-        let shader = Shader::new();
+        let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
         let mut drawables: Vec<Box<dyn Drawable>> = Vec::new();
         let ground = ground::gen_objects();
         drawables.push(Box::new(StaticObject::new(ground.0, ground.1)));

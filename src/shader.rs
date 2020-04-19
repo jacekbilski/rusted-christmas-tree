@@ -1,6 +1,8 @@
 extern crate gl;
 
 use std::ffi::CString;
+use std::fs::File;
+use std::io::Read;
 use std::ptr;
 use std::str;
 
@@ -21,9 +23,9 @@ enum ShaderType {
 }
 
 impl Shader {
-    pub fn new() -> Shader {
-        let vertex_shader = Shader::setup_vertex_shader();
-        let fragment_shader = Shader::setup_fragment_shader();
+    pub fn new(vertex_path: &str, fragment_path: &str) -> Shader {
+        let vertex_shader = Shader::setup_vertex_shader(vertex_path);
+        let fragment_shader = Shader::setup_fragment_shader(fragment_path);
 
         unsafe {
             // link shaders
@@ -39,82 +41,35 @@ impl Shader {
         }
     }
 
-    fn setup_vertex_shader() -> u32 {
-        const VERTEX_SHADER_SOURCE: &str = r#"
-        #version 330 core
-
-        layout (location = 0) in vec3 aPos;
-        layout (location = 1) in vec3 aCol;
-        layout (location = 2) in vec3 aNormal;
-
-        uniform mat4 model;
-        uniform mat4 view;
-        uniform mat4 projection;
-
-        out vec3 FragPosition;
-        out vec3 Colour;
-        out vec3 Normal;
-
-        void main() {
-            gl_Position = projection * view * model * vec4(aPos, 1.0);
-            FragPosition = vec3(model * vec4(aPos, 1.0));
-            Colour = aCol;
-            Normal = aNormal;
-        }
-    "#;
-
+    fn setup_vertex_shader(path: &str) -> u32 {
+        let shader_source = Shader::load_from_file(path);
         unsafe {
             let vertex_shader = gl::CreateShader(gl::VERTEX_SHADER);
-            let c_str_vert = CString::new(VERTEX_SHADER_SOURCE.as_bytes()).unwrap();
-            gl::ShaderSource(vertex_shader, 1, &c_str_vert.as_ptr(), ptr::null());
+            gl::ShaderSource(vertex_shader, 1, &shader_source.as_ptr(), ptr::null());
             gl::CompileShader(vertex_shader);
             Shader::ensure_compilation_success(ShaderType::VertexShader, vertex_shader);
             vertex_shader
         }
     }
 
-    fn setup_fragment_shader() -> u32 {
-        const FRAGMENT_SHADER_SOURCE: &str = r#"
-        #version 330 core
-
-        in vec3 FragPosition;
-        in vec3 Colour;
-        in vec3 Normal;
-
-        uniform vec3 lightColour;
-        uniform vec3 lightPosition;
-        uniform vec3 cameraPosition;
-
-        out vec4 FragColor;
-
-        const float ambientStrength = 0.1;
-        const float specularStrength = 0.5;
-
-        void main() {
-            vec3 ambient = ambientStrength * lightColour;
-
-            vec3 norm = normalize(Normal);
-            vec3 lightDir = normalize(lightPosition - FragPosition);
-            float diff = max(dot(norm, lightDir), 0.0);
-            vec3 diffuse = diff * lightColour;
-
-            vec3 viewDir = normalize(cameraPosition - FragPosition);
-            vec3 reflectDir = reflect(-lightDir, norm);
-            float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-            vec3 specular = specularStrength * spec * lightColour;
-
-            FragColor = vec4((ambient + diffuse + specular) * Colour, 1.0);
-        }
-    "#;
-
+    fn setup_fragment_shader(path: &str) -> u32 {
+        let shader_source = Shader::load_from_file(path);
         unsafe {
             let fragment_shader = gl::CreateShader(gl::FRAGMENT_SHADER);
-            let c_str_frag = CString::new(FRAGMENT_SHADER_SOURCE.as_bytes()).unwrap();
-            gl::ShaderSource(fragment_shader, 1, &c_str_frag.as_ptr(), ptr::null());
+            gl::ShaderSource(fragment_shader, 1, &shader_source.as_ptr(), ptr::null());
             gl::CompileShader(fragment_shader);
             Shader::ensure_compilation_success(ShaderType::FragmentShader, fragment_shader);
             fragment_shader
         }
+    }
+
+    fn load_from_file(path: &str) -> CString {
+        let mut file = File::open(path).expect(&("Failed to open ".to_owned() + path));
+        let mut source = String::new();
+        file.read_to_string(&mut source)
+            .expect("Failed to read vertex shader");
+
+        CString::new(source.as_bytes()).unwrap()
     }
 
     fn ensure_compilation_success(shader_type: ShaderType, shader: u32) {
