@@ -33,6 +33,9 @@ fn main() {
     unsafe {
         gl::Enable(gl::MULTISAMPLE);
         gl::Enable(gl::DEPTH_TEST);
+        gl::Enable(gl::CULL_FACE);
+        gl::CullFace(gl::BACK);
+        gl::FrontFace(gl::CW);
     }
 
     let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());

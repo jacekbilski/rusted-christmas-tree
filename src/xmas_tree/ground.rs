@@ -8,7 +8,7 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
     ];
     let indices: Vec<u32> = vec![
         0, 2, 1,
-        2, 1, 3,
+        1, 2, 3,
     ];
 
     (vertices, indices)

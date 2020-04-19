@@ -96,13 +96,13 @@ fn gen_indices(indices: &mut Vec<u32>, precision: u32, vertices_offset: usize) {
     let mut layer = 1;
     for slice in 0..2 * precision {
         // first layer has only triangles
-        indices.extend([find_index(layer - 1, slice), find_index(layer, slice), find_index(layer, slice + 1)].iter());
+        indices.extend([find_index(layer - 1, slice), find_index(layer, slice + 1), find_index(layer, slice)].iter());
     }
 
     for layer in 2..precision {
         for slice in 0..2 * precision {
             // midddle layers are actually traapezoids, I need two triangles per slice
-            indices.extend([find_index(layer - 1, slice), find_index(layer, slice), find_index(layer, slice + 1)].iter());
+            indices.extend([find_index(layer - 1, slice), find_index(layer, slice + 1), find_index(layer, slice)].iter());
             indices.extend([find_index(layer - 1, slice), find_index(layer - 1, slice + 1), find_index(layer, slice + 1)].iter());
         }
     }
