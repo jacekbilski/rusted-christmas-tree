@@ -1,5 +1,4 @@
-use cgmath::{Deg, Matrix4, perspective, Point3, vec3};
-use cgmath::prelude::*;
+use cgmath::Point3;
 use glfw::Window;
 
 use crate::drawable::Drawable;
@@ -20,6 +19,8 @@ impl XmasTree {
     pub fn setup(window: &Window) -> Self {
         let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
         shader.set_camera(Point3::new(15., 12., 12.), &window);
+        // shader.set_light(Point3::new(10., 100., 10.), 1., 1., 1.);
+        shader.set_light(Point3::new(5., 6., 2.), 1., 1., 1.);
 
         let mut drawables: Vec<Box<dyn Drawable>> = Vec::new();
         let ground = ground::gen_objects();
@@ -36,10 +37,6 @@ impl Drawable for XmasTree {
     fn draw(&self) {
         unsafe {
             gl::UseProgram(self.shader.id);
-            self.shader.set_vec3("lightColour", &vec3(1., 1., 1.));
-            // self.shader.set_vec3("lightPosition", &vec3(10., 100., 10.));
-            self.shader.set_vec3("lightPosition", &vec3(5., 6., 2.));
-
             for d in &self.drawables {
                 d.draw();
             }

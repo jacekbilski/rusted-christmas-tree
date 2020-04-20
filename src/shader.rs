@@ -16,6 +16,7 @@ use self::gl::types::*;
 pub struct Shader {
     pub id: u32,
     camera_ubo: u32,
+    light_ubo: u32,
 }
 
 #[derive(Debug)]
@@ -42,7 +43,8 @@ impl Shader {
             gl::DeleteShader(fragment_shader);
 
             let camera_ubo = Shader::setup_camera_ubo(shader_program);
-            Shader { id: shader_program, camera_ubo }
+            let light_ubo = Shader::setup_light_ubo(shader_program);
+            Shader { id: shader_program, camera_ubo, light_ubo }
         }
     }
 
@@ -59,6 +61,20 @@ impl Shader {
         gl::BindBufferBase(gl::UNIFORM_BUFFER, 0, camera_ubo);
         gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
         camera_ubo
+    }
+
+    unsafe fn setup_light_ubo(shader_program: u32) -> u32 {
+        let c_name = CString::new("Light").unwrap();
+        let uniform_block_index = gl::GetUniformBlockIndex(shader_program, c_name.as_ptr());
+        gl::UniformBlockBinding(shader_program, uniform_block_index, 1);
+        let mut light_ubo = 0 as u32;
+        gl::GenBuffers(1, &mut light_ubo);
+        gl::BindBuffer(gl::UNIFORM_BUFFER, light_ubo);
+        let vector3_size = mem::size_of::<Vector4<f32>>() as isize; // thhere's no mistake, Vector3 takes the same amount of memory as Vector4
+        gl::BufferData(gl::UNIFORM_BUFFER, 2 * vector3_size, ptr::null(), gl::STATIC_DRAW);
+        gl::BindBufferBase(gl::UNIFORM_BUFFER, 1, light_ubo);
+        gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
+        light_ubo
     }
 
     fn setup_vertex_shader(path: &str) -> u32 {
@@ -115,18 +131,6 @@ impl Shader {
         }
     }
 
-    pub unsafe fn set_vec3(&self, name: &str, vec: &Vector3<f32>) {
-        let c_name = CString::new(name).unwrap();
-        let location = gl::GetUniformLocation(self.id, c_name.as_ptr());
-        gl::Uniform3fv(location, 1, vec.as_ptr());
-    }
-
-    pub unsafe fn set_mat4(&self, name: &str, mat: &Matrix4<f32>) {
-        let c_name = CString::new(name).unwrap();
-        let location = gl::GetUniformLocation(self.id, c_name.as_ptr());
-        gl::UniformMatrix4fv(location, 1, gl::FALSE, mat.as_ptr());
-    }
-
     pub fn set_camera(&self, camera_position: Point3<f32>, window: &Window) {
         let matrix_size = mem::size_of::<Matrix4<f32>>() as isize;
         let vector3_size = mem::size_of::<Vector4<f32>>() as isize;
@@ -139,6 +143,19 @@ impl Shader {
             let (width, height) = window.get_size();
             let projection = perspective(Deg(45.0), width as f32 / height as f32, 0.1, 100.0);
             gl::BufferSubData(gl::UNIFORM_BUFFER, vector3_size + matrix_size, matrix_size, projection.as_ptr() as *const c_void);
+
+            gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
+        }
+    }
+
+    pub fn set_light(&self, position: Point3<f32>, red: f32, green: f32, blue: f32) {
+        let vector3_size = mem::size_of::<Vector4<f32>>() as isize;
+        unsafe {
+            gl::BindBuffer(gl::UNIFORM_BUFFER, self.light_ubo);
+            gl::BufferSubData(gl::UNIFORM_BUFFER, 0, vector3_size, position.as_ptr() as *const c_void);
+
+            let colour: Vector3<f32> = vec3(red, green, blue);
+            gl::BufferSubData(gl::UNIFORM_BUFFER, vector3_size, vector3_size, colour.as_ptr() as *const c_void);
 
             gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
         }

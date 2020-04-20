@@ -10,8 +10,10 @@ layout (std140) uniform Camera {
     mat4 projection;
 };
 
-uniform vec3 lightColour;
-uniform vec3 lightPosition;
+layout (std140) uniform Light {
+    vec3 lightPosition;
+    vec3 lightColour;
+};
 
 out vec4 FragColor;
 
