@@ -4,9 +4,14 @@ in vec3 FragPosition;
 in vec3 Colour;
 in vec3 Normal;
 
+layout (std140) uniform Camera {
+    vec3 cameraPosition;
+    mat4 view;
+    mat4 projection;
+};
+
 uniform vec3 lightColour;
 uniform vec3 lightPosition;
-uniform vec3 cameraPosition;
 
 out vec4 FragColor;
 

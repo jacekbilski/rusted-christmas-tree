@@ -4,8 +4,6 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
-use glfw::Window;
-
 use crate::drawable::Drawable;
 
 use self::gl::types::*;
@@ -85,7 +83,7 @@ impl StaticObject {
 }
 
 impl Drawable for StaticObject {
-    fn draw(&self, _window: &mut Window) {
+    fn draw(&self) {
         unsafe {
             gl::BindVertexArray(self.vao);
             gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());

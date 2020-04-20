@@ -38,13 +38,13 @@ fn main() {
         gl::FrontFace(gl::CW);
     }
 
-    let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
+    let obj: Box<dyn Drawable> = Box::new(XmasTree::setup(&window));
     let mut observer = FpsCalculator::new();
 
     // render loop
     while !window.should_close() {
         process_events(&mut window, &events);
-        render(&mut window, &obj);
+        render(&obj);
         window.swap_buffers();
         glfw.poll_events();
         observer.tick();
@@ -64,11 +64,11 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
     (window, events)
 }
 
-fn render(window: &mut Window, obj: &Box<dyn Drawable>) {
+fn render(obj: &Box<dyn Drawable>) {
     unsafe {
         gl::ClearColor(0., 0., 0., 1.0);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        obj.draw(window);
+        obj.draw();
     }
 }
 
