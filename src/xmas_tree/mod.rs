@@ -40,8 +40,6 @@ impl Drawable for XmasTree {
             // self.shader.set_vec3("lightPosition", &vec3(10., 100., 10.));
             self.shader.set_vec3("lightPosition", &vec3(5., 6., 2.));
 
-            self.shader.set_mat4("model", &Matrix4::identity() as &Matrix4<f32>);
-
             for d in &self.drawables {
                 d.draw();
             }

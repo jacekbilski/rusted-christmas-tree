@@ -10,15 +10,13 @@ layout (std140) uniform Camera {
     mat4 projection;
 };
 
-uniform mat4 model;
-
 out vec3 FragPosition;
 out vec3 Colour;
 out vec3 Normal;
 
 void main() {
-    gl_Position = projection * view * model * vec4(aPos, 1.0);
-    FragPosition = vec3(model * vec4(aPos, 1.0));
+    gl_Position = projection * view * vec4(aPos, 1.0);
+    FragPosition = aPos;
     Colour = aCol;
     Normal = aNormal;
 }
