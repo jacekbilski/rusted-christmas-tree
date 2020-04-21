@@ -3,6 +3,7 @@ use glfw::Window;
 
 use crate::drawable::Drawable;
 use crate::shader::Shader;
+use crate::xmas_tree::snow::Snow;
 use crate::xmas_tree::static_object::StaticObject;
 
 mod static_object;
@@ -30,8 +31,7 @@ impl XmasTree {
         drawables.push(Box::new(StaticObject::new(tree.0, tree.1)));
         let baubles = baubles::gen_objects();
         drawables.push(Box::new(StaticObject::new(baubles.0, baubles.1)));
-        let snow = snow::gen_objects();
-        drawables.push(Box::new(StaticObject::new(snow.0, snow.1)));
+        drawables.push(Box::new(Snow::new()));
         XmasTree { shader, drawables }
     }
 }
