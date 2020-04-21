@@ -8,6 +8,7 @@ use crate::xmas_tree::static_object::StaticObject;
 mod static_object;
 mod baubles;
 mod ground;
+mod snow;
 mod tree;
 
 pub struct XmasTree {
@@ -29,6 +30,8 @@ impl XmasTree {
         drawables.push(Box::new(StaticObject::new(tree.0, tree.1)));
         let baubles = baubles::gen_objects();
         drawables.push(Box::new(StaticObject::new(baubles.0, baubles.1)));
+        let snow = snow::gen_objects();
+        drawables.push(Box::new(StaticObject::new(snow.0, snow.1)));
         XmasTree { shader, drawables }
     }
 }
