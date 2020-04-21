@@ -5,6 +5,7 @@ use std::os::raw::c_void;
 use std::ptr;
 
 use crate::drawable::Drawable;
+use crate::shader::Shader;
 
 use self::gl::types::*;
 
@@ -13,6 +14,7 @@ type VAO = u32;
 type EBO = u32;
 
 pub struct StaticObject {
+    shader: Shader,
     vao: VAO,
     indices: Vec<u32>,
 }
@@ -24,8 +26,9 @@ impl StaticObject {
             Self::create_ebo(&indices);
         };
         let vao = Self::create_vao(within_vao);
+        let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
 
-        Self { vao, indices }
+        Self { shader, vao, indices }
     }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
@@ -85,6 +88,7 @@ impl StaticObject {
 impl Drawable for StaticObject {
     fn draw(&self) {
         unsafe {
+            gl::UseProgram(self.shader.id);
             gl::BindVertexArray(self.vao);
             gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
             gl::BindVertexArray(0);
