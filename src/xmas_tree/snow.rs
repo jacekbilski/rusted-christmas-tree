@@ -1,4 +1,5 @@
 extern crate gl;
+extern crate rand;
 
 use core::f32::consts::PI;
 use std::mem;
@@ -9,10 +10,19 @@ use crate::drawable::Drawable;
 use crate::shader::Shader;
 
 use self::gl::types::*;
+use self::rand::Rng;
 
 type VBO = u32;
 type VAO = u32;
 type EBO = u32;
+
+const SNOW_X_MIN: f32 = -10.;
+const SNOW_X_MAX: f32 = 10.;
+const SNOW_Y_MIN: f32 = 0.;
+const SNOW_Y_MAX: f32 = 15.;
+const SNOW_Z_MIN: f32 = -10.;
+const SNOW_Z_MAX: f32 = 10.;
+const MAX_FLAKES: u32 = 1000;
 
 pub struct Snow {
     shader: Shader,
@@ -115,11 +125,16 @@ impl Snow {
 
     fn create_instances_vbo() -> VBO {
         unsafe {
-            let instances: [f32; 9] = [
-                0., 0., 0.,
-                0., 1., 0.,
-                0., 0., 1.,
-            ];
+            let mut instances: Vec<f32> = Vec::with_capacity(3 * MAX_FLAKES as usize);
+            let mut rng = rand::thread_rng();
+            for _i in 0..MAX_FLAKES {
+                let x_offset = rng.gen::<f32>() * (SNOW_X_MAX - SNOW_X_MIN) + SNOW_X_MIN;
+                let y_offset = rng.gen::<f32>() * (SNOW_Y_MAX - SNOW_Y_MIN) + SNOW_Y_MIN;
+                let z_offset = rng.gen::<f32>() * (SNOW_Z_MAX - SNOW_Z_MIN) + SNOW_Z_MIN;
+                instances.push(x_offset);
+                instances.push(y_offset);
+                instances.push(z_offset);
+            }
 
             let mut instances_vbo = 0 as VBO;
             gl::GenBuffers(1, &mut instances_vbo); // create buffer for my data
@@ -139,7 +154,7 @@ impl Drawable for Snow {
         unsafe {
             gl::UseProgram(self.shader.id);
             gl::BindVertexArray(self.vao);
-            gl::DrawElementsInstanced(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), 3);
+            gl::DrawElementsInstanced(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), MAX_FLAKES as i32);
             gl::BindVertexArray(0);
         }
     }
