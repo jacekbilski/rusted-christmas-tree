@@ -10,7 +10,7 @@ layout (std140) uniform Camera {
     mat4 projection;
 };
 
-layout (std140) uniform Light {
+layout (std140) uniform Lights {
     vec3 lightPosition;
     vec3 lightColour;
 };

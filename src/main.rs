@@ -12,12 +12,14 @@ use observer::RenderLoopObserver;
 use xmas_tree::XmasTree;
 
 use crate::camera::Camera;
+use crate::lights::Lights;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
 mod camera;
 mod drawable;
 mod fps_calculator;
+mod lights;
 mod observer;
 mod shader;
 mod xmas_tree;
@@ -42,6 +44,10 @@ fn main() {
         gl::CullFace(gl::BACK);
         gl::FrontFace(gl::CW);
     }
+
+    let mut lights = Lights::setup();
+    // lights.add(Point3::new(10., 100., 10.), 1., 1., 1.);
+    lights.add(Point3::new(5., 6., 2.), 1., 1., 1.);
 
     let _camera = Camera::new(Point3::new(15., 12., 12.), Point3::new(0., 0., 0.), &mut window);
     let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());

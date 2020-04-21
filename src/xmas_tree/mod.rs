@@ -1,6 +1,3 @@
-use cgmath::Point3;
-use glfw::Window;
-
 use crate::drawable::Drawable;
 use crate::shader::Shader;
 use crate::xmas_tree::snow::Snow;
@@ -20,8 +17,6 @@ pub struct XmasTree {
 impl XmasTree {
     pub fn setup() -> Self {
         let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
-        // shader.set_light(Point3::new(10., 100., 10.), 1., 1., 1.);
-        shader.set_light(Point3::new(5., 6., 2.), 1., 1., 1.);
 
         let mut drawables: Vec<Box<dyn Drawable>> = Vec::new();
         let ground = ground::gen_objects();

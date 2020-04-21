@@ -1,22 +1,18 @@
 extern crate gl;
 
-use std::{mem, ptr};
 use std::ffi::CString;
 use std::fs::File;
 use std::io::Read;
-use std::os::raw::c_void;
+use std::ptr;
 use std::str;
-
-use cgmath::{Point3, vec3, Vector3, Vector4};
-use cgmath::prelude::*;
 
 use self::gl::types::*;
 
 pub const CAMERA_UBO_BINDING_POINT: u32 = 0;
+pub const LIGHTS_UBO_BINDING_POINT: u32 = 1;
 
 pub struct Shader {
     pub id: u32,
-    light_ubo: u32,
 }
 
 #[derive(Debug)]
@@ -30,7 +26,7 @@ impl Shader {
     pub fn new(vertex_path: &str, fragment_path: &str) -> Shader {
         unsafe {
             let shader_program = gl::CreateProgram();
-            let mut shader = Shader {id: shader_program, light_ubo: 0};
+            let shader = Shader { id: shader_program };
             let vertex_shader = shader.add_vertex_shader(vertex_path);
             let fragment_shader = shader.add_fragment_shader(fragment_path);
             gl::LinkProgram(shader_program);
@@ -40,7 +36,7 @@ impl Shader {
             gl::DeleteShader(fragment_shader);
 
             shader.bind_camera_ubo();
-            shader.light_ubo = Shader::setup_light_ubo(shader_program);
+            shader.bind_lights_ubo();
             shader
         }
     }
@@ -51,18 +47,10 @@ impl Shader {
         gl::UniformBlockBinding(self.id, uniform_block_index, CAMERA_UBO_BINDING_POINT);
     }
 
-    unsafe fn setup_light_ubo(shader_program: u32) -> u32 {
-        let c_name = CString::new("Light").unwrap();
-        let uniform_block_index = gl::GetUniformBlockIndex(shader_program, c_name.as_ptr());
-        gl::UniformBlockBinding(shader_program, uniform_block_index, 1);
-        let mut light_ubo = 0 as u32;
-        gl::GenBuffers(1, &mut light_ubo);
-        gl::BindBuffer(gl::UNIFORM_BUFFER, light_ubo);
-        let vector3_size = mem::size_of::<Vector4<f32>>() as isize; // there's no mistake, Vector3 takes the same amount of memory as Vector4
-        gl::BufferData(gl::UNIFORM_BUFFER, 2 * vector3_size, ptr::null(), gl::STATIC_DRAW);
-        gl::BindBufferBase(gl::UNIFORM_BUFFER, 1, light_ubo);
-        gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
-        light_ubo
+    unsafe fn bind_lights_ubo(&self) {
+        let c_name = CString::new("Lights").unwrap();
+        let uniform_block_index = gl::GetUniformBlockIndex(self.id, c_name.as_ptr());
+        gl::UniformBlockBinding(self.id, uniform_block_index, LIGHTS_UBO_BINDING_POINT);
     }
 
     fn add_vertex_shader(&self, path: &str) -> u32 {
@@ -86,19 +74,6 @@ impl Shader {
             ensure_compilation_success(ShaderType::FragmentShader, fragment_shader);
             gl::AttachShader(self.id, fragment_shader);
             fragment_shader
-        }
-    }
-
-    pub fn set_light(&self, position: Point3<f32>, red: f32, green: f32, blue: f32) {
-        let vector3_size = mem::size_of::<Vector4<f32>>() as isize;
-        unsafe {
-            gl::BindBuffer(gl::UNIFORM_BUFFER, self.light_ubo);
-            gl::BufferSubData(gl::UNIFORM_BUFFER, 0, vector3_size, position.as_ptr() as *const c_void);
-
-            let colour: Vector3<f32> = vec3(red, green, blue);
-            gl::BufferSubData(gl::UNIFORM_BUFFER, vector3_size, vector3_size, colour.as_ptr() as *const c_void);
-
-            gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
         }
     }
 }
