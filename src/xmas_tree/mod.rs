@@ -18,9 +18,8 @@ pub struct XmasTree {
 }
 
 impl XmasTree {
-    pub fn setup(window: &Window) -> Self {
+    pub fn setup() -> Self {
         let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
-        shader.set_camera(Point3::new(15., 12., 12.), &window);
         // shader.set_light(Point3::new(10., 100., 10.), 1., 1., 1.);
         shader.set_light(Point3::new(5., 6., 2.), 1., 1., 1.);
 

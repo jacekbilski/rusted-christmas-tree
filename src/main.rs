@@ -4,13 +4,18 @@ extern crate glfw;
 use std::boxed::Box;
 use std::sync::mpsc::Receiver;
 
+use cgmath::Point3;
+
 use drawable::Drawable;
 use fps_calculator::FpsCalculator;
 use observer::RenderLoopObserver;
 use xmas_tree::XmasTree;
 
+use crate::camera::Camera;
+
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
+mod camera;
 mod drawable;
 mod fps_calculator;
 mod observer;
@@ -38,7 +43,8 @@ fn main() {
         gl::FrontFace(gl::CW);
     }
 
-    let obj: Box<dyn Drawable> = Box::new(XmasTree::setup(&window));
+    let _camera = Camera::new(Point3::new(15., 12., 12.), Point3::new(0., 0., 0.), &mut window);
+    let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
     let mut observer = FpsCalculator::new();
 
     // render loop
