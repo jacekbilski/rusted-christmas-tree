@@ -6,6 +6,8 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
+use cgmath::{Euler, Matrix4, Rad, vec3, Vector4};
+
 use crate::drawable::Drawable;
 use crate::shader::Shader;
 
@@ -18,8 +20,8 @@ type EBO = u32;
 
 const SNOW_X_MIN: f32 = -10.;
 const SNOW_X_MAX: f32 = 10.;
-const SNOW_Y_MIN: f32 = 0.;
-const SNOW_Y_MAX: f32 = 15.;
+const SNOW_Y_MIN: f32 = -5.;
+const SNOW_Y_MAX: f32 = 10.;
 const SNOW_Z_MIN: f32 = -10.;
 const SNOW_Z_MAX: f32 = 10.;
 const MAX_FLAKES: u32 = 1000;
@@ -87,10 +89,23 @@ impl Snow {
             gl::EnableVertexAttribArray(2); // enable the attribute for normal vector
 
             // enter instancing, using completely different VBO
+            // model matrix with rotation and translation
             gl::BindBuffer(gl::ARRAY_BUFFER, self.instances_vbo);
-            gl::VertexAttribPointer(3, 3, gl::FLOAT, gl::FALSE, 3 * mem::size_of::<GLfloat>() as GLsizei, ptr::null());
+            let mat4_size = mem::size_of::<Matrix4<f32>>() as i32;
+            let vec4_size = mem::size_of::<Vector4<f32>>() as i32;
+            // I need to do the calls below 4 times, because size can be at most 4, but I'm sending a matrix of size 16
+            gl::VertexAttribPointer(3, 4, gl::FLOAT, gl::FALSE, mat4_size, ptr::null());
+            gl::VertexAttribPointer(4, 4, gl::FLOAT, gl::FALSE, mat4_size, vec4_size as *const c_void);
+            gl::VertexAttribPointer(5, 4, gl::FLOAT, gl::FALSE, mat4_size, (2 * vec4_size) as *const c_void);
+            gl::VertexAttribPointer(6, 4, gl::FLOAT, gl::FALSE, mat4_size, (3 * vec4_size) as *const c_void);
             gl::EnableVertexAttribArray(3);
+            gl::EnableVertexAttribArray(4);
+            gl::EnableVertexAttribArray(5);
+            gl::EnableVertexAttribArray(6);
             gl::VertexAttribDivisor(3, 1);    // every iteration
+            gl::VertexAttribDivisor(4, 1);    // every iteration
+            gl::VertexAttribDivisor(5, 1);    // every iteration
+            gl::VertexAttribDivisor(6, 1);    // every iteration
 
             gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind my VBO
             // do NOT unbind EBO, VAO would remember that
@@ -125,23 +140,28 @@ impl Snow {
 
     fn create_instances_vbo() -> VBO {
         unsafe {
-            let mut instances: Vec<f32> = Vec::with_capacity(3 * MAX_FLAKES as usize);
+            let mut instances: Vec<Matrix4<f32>> = Vec::with_capacity(MAX_FLAKES as usize);
             let mut rng = rand::thread_rng();
             for _i in 0..MAX_FLAKES {
                 let x_offset = rng.gen::<f32>() * (SNOW_X_MAX - SNOW_X_MIN) + SNOW_X_MIN;
                 let y_offset = rng.gen::<f32>() * (SNOW_Y_MAX - SNOW_Y_MIN) + SNOW_Y_MIN;
                 let z_offset = rng.gen::<f32>() * (SNOW_Z_MAX - SNOW_Z_MIN) + SNOW_Z_MIN;
-                instances.push(x_offset);
-                instances.push(y_offset);
-                instances.push(z_offset);
+                let x_rotation = rng.gen::<f32>() * 2. * PI;
+                let y_rotation = rng.gen::<f32>() * 2. * PI;
+                let z_rotation = rng.gen::<f32>() * 2. * PI;
+                let rotation = Matrix4::from(Euler {x: Rad(x_rotation), y: Rad(y_rotation), z: Rad(z_rotation)});
+                let translation = Matrix4::from_translation(vec3(x_offset, y_offset, z_offset));
+                let model = translation * rotation;
+                instances.push(model);
             }
 
             let mut instances_vbo = 0 as VBO;
             gl::GenBuffers(1, &mut instances_vbo); // create buffer for my data
             gl::BindBuffer(gl::ARRAY_BUFFER, instances_vbo); // ARRAY_BUFFER now "points" to my buffer
+            let matrix_size = mem::size_of::<Matrix4<f32>>();
             gl::BufferData(gl::ARRAY_BUFFER,
-                           (instances.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                           &instances[0] as *const f32 as *const c_void,
+                           (instances.len() * matrix_size) as GLsizeiptr,
+                           instances.as_ptr() as *const c_void,
                            gl::STATIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
 
             instances_vbo
