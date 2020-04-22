@@ -86,7 +86,7 @@ impl StaticObject {
 }
 
 impl Drawable for StaticObject {
-    fn draw(&self) {
+    fn draw(&mut self) {
         unsafe {
             gl::UseProgram(self.shader.id);
             gl::BindVertexArray(self.vao);

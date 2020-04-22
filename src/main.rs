@@ -50,13 +50,13 @@ fn main() {
     lights.add(Point3::new(5., 6., 2.), 1., 1., 1.);
 
     let _camera = Camera::new(Point3::new(15., 12., 12.), Point3::new(0., 0., 0.), &mut window);
-    let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
+    let mut obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
     let mut observer = FpsCalculator::new();
 
     // render loop
     while !window.should_close() {
         process_events(&mut window, &events);
-        render(&obj);
+        render(&mut obj);
         window.swap_buffers();
         glfw.poll_events();
         observer.tick();
@@ -76,7 +76,7 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
     (window, events)
 }
 
-fn render(obj: &Box<dyn Drawable>) {
+fn render(obj: &mut Box<dyn Drawable>) {
     unsafe {
         gl::ClearColor(0., 0., 0., 1.0);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);

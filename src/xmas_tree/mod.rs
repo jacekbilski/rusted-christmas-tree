@@ -27,8 +27,8 @@ impl XmasTree {
 }
 
 impl Drawable for XmasTree {
-    fn draw(&self) {
-        for d in &self.drawables {
+    fn draw(&mut self) {
+        for d in &mut self.drawables {
             d.draw();
         }
     }

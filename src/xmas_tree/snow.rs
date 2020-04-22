@@ -26,7 +26,9 @@ const SNOW_Y_MIN: f32 = -5.;
 const SNOW_Y_MAX: f32 = 10.;
 const SNOW_Z_MIN: f32 = -10.;
 const SNOW_Z_MAX: f32 = 10.;
-const MAX_FLAKES: u32 = 1000;
+
+const SNOWFLAKE_FALL_VELOCITY: f32 = 0.02;
+const MAX_FLAKES: u32 = 5000;
 
 struct Instance {
     position: Vector3<f32>,
@@ -53,7 +55,7 @@ impl Snow {
     }
 
     fn gen_objects() -> (Vec<f32>, Vec<u32>) {
-        let radius: f32 = 0.07;
+        let radius: f32 = 0.05;
         let colour: [f32; 3] = [1., 1., 1.];
         let normal: [f32; 3] = [1., 0., 0.];
         let mut vertices: Vec<f32> = vec![];
@@ -152,7 +154,7 @@ impl Snow {
         let x_range = Uniform::new(SNOW_X_MIN, SNOW_X_MAX);
         let y_range = Uniform::new(SNOW_Y_MIN, SNOW_Y_MAX);
         let z_range = Uniform::new(SNOW_Z_MIN, SNOW_Z_MAX);
-        let angle_range  = Uniform::new(0., 2. * PI);
+        let angle_range = Uniform::new(0., 2. * PI);
         let mut rng = SmallRng::from_entropy();
         for _i in 0..MAX_FLAKES {
             let x_position = rng.sample(x_range);
@@ -166,6 +168,27 @@ impl Snow {
             instances.push(Instance { position, rotation });
         }
         instances
+    }
+
+    fn move_snowflakes(&mut self) {
+        let mut rng = SmallRng::from_entropy();
+        let pos_offset_range = Uniform::new(-0.02 as f32, 0.02);
+        let rot_angle_range = Uniform::new(-PI / 18., PI / 18.);
+        for i in 0..MAX_FLAKES as usize {
+            let mut instance = &mut self.instances[i];
+            let new_x_pos = instance.position.x + rng.sample(pos_offset_range);
+            let mut new_y_pos = instance.position.y + rng.sample(pos_offset_range) - SNOWFLAKE_FALL_VELOCITY;
+            if new_y_pos < SNOW_Y_MIN {
+                new_y_pos = SNOW_Y_MAX;
+            }
+            let new_z_pos = instance.position.z + rng.sample(pos_offset_range);
+            instance.position = vec3(new_x_pos, new_y_pos, new_z_pos);
+
+            let new_x_rot = instance.rotation.x + Rad(rng.sample(rot_angle_range));
+            let new_y_rot = instance.rotation.y + Rad(rng.sample(rot_angle_range));
+            let new_z_rot = instance.rotation.z + Rad(rng.sample(rot_angle_range));
+            instance.rotation = vec3(new_x_rot, new_y_rot, new_z_rot);
+        }
     }
 
     fn fill_instances_vbo(&self) {
@@ -184,7 +207,7 @@ impl Snow {
             gl::BufferData(gl::ARRAY_BUFFER,
                            (MAX_FLAKES as usize * matrix_size) as GLsizeiptr,
                            buffer.as_ptr() as *const c_void,
-                           gl::STATIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
+                           gl::DYNAMIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
         }
     }
 
@@ -196,19 +219,20 @@ impl Snow {
             let matrix_size = mem::size_of::<Matrix4<f32>>();
             gl::BufferData(gl::ARRAY_BUFFER,
                            (MAX_FLAKES as usize * matrix_size) as GLsizeiptr,
-                           ptr::null(),
-                           gl::STATIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
+                           ptr::null(), // don't fill, only reserve space
+                           gl::DYNAMIC_DRAW);
             instances_vbo
         }
     }
 }
 
 impl Drawable for Snow {
-    fn draw(&self) {
+    fn draw(&mut self) {
+        self.move_snowflakes();
+        self.fill_instances_vbo();
         unsafe {
             gl::UseProgram(self.shader.id);
             gl::BindVertexArray(self.vao);
-            self.fill_instances_vbo();
             gl::DrawElementsInstanced(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), MAX_FLAKES as i32);
             gl::BindVertexArray(0);
         }
