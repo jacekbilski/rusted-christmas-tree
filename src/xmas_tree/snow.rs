@@ -7,12 +7,14 @@ use std::os::raw::c_void;
 use std::ptr;
 
 use cgmath::{Euler, Matrix4, Rad, vec3, Vector3, Vector4};
+use rand::{Rng, SeedableRng};
+use rand::distributions::Uniform;
+use rand::rngs::SmallRng;
 
 use crate::drawable::Drawable;
 use crate::shader::Shader;
 
 use self::gl::types::*;
-use self::rand::Rng;
 
 type VBO = u32;
 type VAO = u32;
@@ -147,14 +149,18 @@ impl Snow {
 
     fn gen_instances() -> Vec<Instance> {
         let mut instances: Vec<Instance> = Vec::with_capacity(MAX_FLAKES as usize);
-        let mut rng = rand::thread_rng();
+        let x_range = Uniform::new(SNOW_X_MIN, SNOW_X_MAX);
+        let y_range = Uniform::new(SNOW_Y_MIN, SNOW_Y_MAX);
+        let z_range = Uniform::new(SNOW_Z_MIN, SNOW_Z_MAX);
+        let angle_range  = Uniform::new(0., 2. * PI);
+        let mut rng = SmallRng::from_entropy();
         for _i in 0..MAX_FLAKES {
-            let x_position = rng.gen::<f32>() * (SNOW_X_MAX - SNOW_X_MIN) + SNOW_X_MIN;
-            let y_position = rng.gen::<f32>() * (SNOW_Y_MAX - SNOW_Y_MIN) + SNOW_Y_MIN;
-            let z_position = rng.gen::<f32>() * (SNOW_Z_MAX - SNOW_Z_MIN) + SNOW_Z_MIN;
-            let x_rotation = Rad(rng.gen::<f32>() * 2. * PI);
-            let y_rotation = Rad(rng.gen::<f32>() * 2. * PI);
-            let z_rotation = Rad(rng.gen::<f32>() * 2. * PI);
+            let x_position = rng.sample(x_range);
+            let y_position = rng.sample(y_range);
+            let z_position = rng.sample(z_range);
+            let x_rotation = Rad(rng.sample(angle_range));
+            let y_rotation = Rad(rng.sample(angle_range));
+            let z_rotation = Rad(rng.sample(angle_range));
             let position = vec3(x_position, y_position, z_position);
             let rotation = vec3(x_rotation, y_rotation, z_rotation);
             instances.push(Instance { position, rotation });

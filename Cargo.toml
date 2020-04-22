@@ -10,4 +10,4 @@ edition = "2018"
 cgmath = "0.17.0"
 gl = "0.14.0"
 glfw = "0.37.0"
-rand = "0.7.3"
+rand = {version = "0.7.3", features = ["small_rng"]}
