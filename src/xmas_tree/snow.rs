@@ -6,7 +6,7 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
-use cgmath::{Euler, Matrix4, Rad, vec3, Vector4};
+use cgmath::{Euler, Matrix4, Rad, vec3, Vector3, Vector4};
 
 use crate::drawable::Drawable;
 use crate::shader::Shader;
@@ -26,19 +26,26 @@ const SNOW_Z_MIN: f32 = -10.;
 const SNOW_Z_MAX: f32 = 10.;
 const MAX_FLAKES: u32 = 1000;
 
+struct Instance {
+    position: Vector3<f32>,
+    rotation: Vector3<Rad<f32>>,
+}
+
 pub struct Snow {
     shader: Shader,
     vao: VAO,
-    indices: Vec<u32>,
     instances_vbo: VBO,
+    indices: Vec<u32>,
+    instances: Vec<Instance>,
 }
 
 impl Snow {
     pub fn new() -> Self {
         let shader = Shader::new("src/xmas_tree/shaders/snow.vert", "src/xmas_tree/shaders/static.frag");
         let (vertices, indices) = Snow::gen_objects();
+        let instances = Snow::gen_instances();
         let instances_vbo = Self::create_instances_vbo();
-        let mut snow = Self { shader, vao: 0, indices, instances_vbo };
+        let mut snow = Self { shader, vao: 0, instances_vbo, indices, instances };
         snow.vao = snow.create_vao(&vertices);
         snow
     }
@@ -138,32 +145,53 @@ impl Snow {
         }
     }
 
+    fn gen_instances() -> Vec<Instance> {
+        let mut instances: Vec<Instance> = Vec::with_capacity(MAX_FLAKES as usize);
+        let mut rng = rand::thread_rng();
+        for _i in 0..MAX_FLAKES {
+            let x_position = rng.gen::<f32>() * (SNOW_X_MAX - SNOW_X_MIN) + SNOW_X_MIN;
+            let y_position = rng.gen::<f32>() * (SNOW_Y_MAX - SNOW_Y_MIN) + SNOW_Y_MIN;
+            let z_position = rng.gen::<f32>() * (SNOW_Z_MAX - SNOW_Z_MIN) + SNOW_Z_MIN;
+            let x_rotation = Rad(rng.gen::<f32>() * 2. * PI);
+            let y_rotation = Rad(rng.gen::<f32>() * 2. * PI);
+            let z_rotation = Rad(rng.gen::<f32>() * 2. * PI);
+            let position = vec3(x_position, y_position, z_position);
+            let rotation = vec3(x_rotation, y_rotation, z_rotation);
+            instances.push(Instance { position, rotation });
+        }
+        instances
+    }
+
+    fn fill_instances_vbo(&self) {
+        let mut buffer: Vec<Matrix4<f32>> = Vec::with_capacity(MAX_FLAKES as usize);
+        for i in 0..MAX_FLAKES as usize {
+            let instance = &self.instances[i];
+            let rotation = Matrix4::from(Euler { x: instance.rotation.x, y: instance.rotation.y, z: instance.rotation.z });
+            let translation = Matrix4::from_translation(instance.position);
+            let model = translation * rotation;
+            buffer.push(model);
+        }
+
+        unsafe {
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.instances_vbo); // ARRAY_BUFFER now "points" to my buffer
+            let matrix_size = mem::size_of::<Matrix4<f32>>();
+            gl::BufferData(gl::ARRAY_BUFFER,
+                           (MAX_FLAKES as usize * matrix_size) as GLsizeiptr,
+                           buffer.as_ptr() as *const c_void,
+                           gl::STATIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
+        }
+    }
+
     fn create_instances_vbo() -> VBO {
         unsafe {
-            let mut instances: Vec<Matrix4<f32>> = Vec::with_capacity(MAX_FLAKES as usize);
-            let mut rng = rand::thread_rng();
-            for _i in 0..MAX_FLAKES {
-                let x_offset = rng.gen::<f32>() * (SNOW_X_MAX - SNOW_X_MIN) + SNOW_X_MIN;
-                let y_offset = rng.gen::<f32>() * (SNOW_Y_MAX - SNOW_Y_MIN) + SNOW_Y_MIN;
-                let z_offset = rng.gen::<f32>() * (SNOW_Z_MAX - SNOW_Z_MIN) + SNOW_Z_MIN;
-                let x_rotation = rng.gen::<f32>() * 2. * PI;
-                let y_rotation = rng.gen::<f32>() * 2. * PI;
-                let z_rotation = rng.gen::<f32>() * 2. * PI;
-                let rotation = Matrix4::from(Euler {x: Rad(x_rotation), y: Rad(y_rotation), z: Rad(z_rotation)});
-                let translation = Matrix4::from_translation(vec3(x_offset, y_offset, z_offset));
-                let model = translation * rotation;
-                instances.push(model);
-            }
-
             let mut instances_vbo = 0 as VBO;
             gl::GenBuffers(1, &mut instances_vbo); // create buffer for my data
             gl::BindBuffer(gl::ARRAY_BUFFER, instances_vbo); // ARRAY_BUFFER now "points" to my buffer
             let matrix_size = mem::size_of::<Matrix4<f32>>();
             gl::BufferData(gl::ARRAY_BUFFER,
-                           (instances.len() * matrix_size) as GLsizeiptr,
-                           instances.as_ptr() as *const c_void,
+                           (MAX_FLAKES as usize * matrix_size) as GLsizeiptr,
+                           ptr::null(),
                            gl::STATIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
-
             instances_vbo
         }
     }
@@ -174,6 +202,7 @@ impl Drawable for Snow {
         unsafe {
             gl::UseProgram(self.shader.id);
             gl::BindVertexArray(self.vao);
+            self.fill_instances_vbo();
             gl::DrawElementsInstanced(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), MAX_FLAKES as i32);
             gl::BindVertexArray(0);
         }
