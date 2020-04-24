@@ -60,19 +60,29 @@ impl Snow {
         let radius: f32 = 0.05;
         let colour: [f32; 3] = [1., 1., 1.];
         let normal: [f32; 3] = [1., 0., 0.];
+        let neg_normal: [f32; 3] = [-1., 0., 0.];
         let mut vertices: Vec<f32> = vec![];
 
         let angle_diff = PI / 3 as f32;
 
         for i in 0..6 {
             let angle = i as f32 * angle_diff;
+            // upper side
             vertices.extend([0., radius * angle.cos(), radius * angle.sin()].iter());
             vertices.extend(colour.iter());
             vertices.extend(normal.iter());
+            // bottom side
+            vertices.extend([-0., -radius * angle.cos(), -radius * angle.sin()].iter());
+            vertices.extend(colour.iter());
+            vertices.extend(neg_normal.iter());
         }
         let indices: Vec<u32> = vec![
-            4, 2, 0,
-            5, 3, 1,
+            // upper side
+            8, 4, 0,
+            10, 6, 2,
+            // bottom side
+            1, 5, 9,
+            3, 7, 11,
         ];
 
         (vertices, indices)
