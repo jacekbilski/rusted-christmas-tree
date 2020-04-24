@@ -27,8 +27,10 @@ const SNOW_Y_MAX: f32 = 10.;
 const SNOW_Z_MIN: f32 = -10.;
 const SNOW_Z_MAX: f32 = 10.;
 
-const SNOWFLAKE_FALL_VELOCITY: f32 = 0.02;
-const MAX_FLAKES: u32 = 5000;
+const SNOWFLAKE_FALL_VELOCITY: f32 = 0.01;
+const SNOWFLAKE_MAX_RANDOM_OFFSET: f32 = 0.01;
+const SNOWFLAKE_MAX_RANDOM_ROTATION: f32 = PI / 180. * 10.;
+const MAX_FLAKES: u32 = 5_000;
 
 struct Instance {
     position: Vector3<f32>,
@@ -172,8 +174,8 @@ impl Snow {
 
     fn move_snowflakes(&mut self) {
         let mut rng = SmallRng::from_entropy();
-        let pos_offset_range = Uniform::new(-0.02 as f32, 0.02);
-        let rot_angle_range = Uniform::new(-PI / 18., PI / 18.);
+        let pos_offset_range = Uniform::new(-SNOWFLAKE_MAX_RANDOM_OFFSET as f32, SNOWFLAKE_MAX_RANDOM_OFFSET);
+        let rot_angle_range = Uniform::new(-SNOWFLAKE_MAX_RANDOM_ROTATION, SNOWFLAKE_MAX_RANDOM_ROTATION);
         for i in 0..MAX_FLAKES as usize {
             let mut instance = &mut self.instances[i];
             let new_x_pos = instance.position.x + rng.sample(pos_offset_range);
