@@ -20,5 +20,5 @@ void main() {
     gl_Position = projection * view * pos;
     FragPosition = vec3(pos);
     Colour = aCol;
-    Normal = aNormal;
+    Normal = mat3(transpose(inverse(instanceModel))) * aNormal;
 }
