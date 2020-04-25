@@ -18,7 +18,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(position: Point3<f32>, look_at: Point3<f32>, window: &mut Window) -> Self {
+    pub fn new(position: Point3<f32>, look_at: Point3<f32>, window: &Window) -> Self {
         let (window_width, window_height) = window.get_size();
         let mut camera = Camera {position, look_at, ubo: 0, window_width: window_width as f32, window_height: window_height as f32};
         let ubo = camera.setup_camera_ubo();
@@ -57,4 +57,10 @@ impl Camera {
         }
     }
 
+    pub fn on_window_resize(&mut self, window: &Window) {
+        let (window_width, window_height) = window.get_size();
+        self.window_width = window_width as f32;
+        self.window_height = window_height as f32;
+        self.set_position(self.position, self.look_at);
+    }
 }

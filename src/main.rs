@@ -49,13 +49,13 @@ fn main() {
     // lights.add(Point3::new(10., 100., 10.), 1., 1., 1.);
     lights.add(Point3::new(5., 6., 2.), 1., 1., 1.);
 
-    let _camera = Camera::new(Point3::new(15., 12., 12.), Point3::new(0., 0., 0.), &mut window);
+    let mut camera = Camera::new(Point3::new(15., 12., 12.), Point3::new(0., 0., 0.), &window);
     let mut obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
     let mut observer = FpsCalculator::new();
 
     // render loop
     while !window.should_close() {
-        process_events(&mut window, &events);
+        process_events(&mut window, &events, &mut camera);
         render(&mut obj);
         window.swap_buffers();
         glfw.poll_events();
@@ -84,13 +84,14 @@ fn render(obj: &mut Box<dyn Drawable>) {
     }
 }
 
-fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>) {
+fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>, camera: &mut Camera) {
     for (_, event) in glfw::flush_messages(events) {
         match event {
             glfw::WindowEvent::FramebufferSize(width, height) => {
                 // make sure the viewport matches the new window dimensions; note that width and
                 // height will be significantly larger than specified on retina displays.
                 unsafe { gl::Viewport(0, 0, width, height) }
+                camera.on_window_resize(&window);
             }
             glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => window.set_should_close(true),
             _ => {}
