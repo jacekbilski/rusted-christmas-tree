@@ -17,6 +17,7 @@ use crate::lights::Lights;
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
 mod camera;
+mod coords;
 mod drawable;
 mod fps_calculator;
 mod lights;
@@ -49,9 +50,10 @@ fn main() {
     // lights.add(Point3::new(10., 100., 10.), 1., 1., 1.);
     lights.add(Point3::new(5., 6., 2.), 1., 1., 1.);
 
-    let mut camera = Camera::new(Point3::new(15., 12., 12.), Point3::new(0., 0., 0.), &window);
+    let camera_position = Point3::new(15., 12., 12.);
+    let mut camera = Camera::new(camera_position, Point3::new(0., 0., 0.), &window);
     let mut obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
-    let mut observer = FpsCalculator::new();
+    let mut fps_calculator = FpsCalculator::new();
 
     // render loop
     while !window.should_close() {
@@ -59,7 +61,7 @@ fn main() {
         render(&mut obj);
         window.swap_buffers();
         glfw.poll_events();
-        observer.tick();
+        fps_calculator.tick();
     }
 }
 
