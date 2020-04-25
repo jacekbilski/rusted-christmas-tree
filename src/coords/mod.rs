@@ -1,7 +1,7 @@
 use std::f32::consts::FRAC_PI_2;
 
-use cgmath::Point3;
 use cgmath::num_traits::Float;
+use cgmath::Point3;
 
 /// A point P in 3-dimensional space.
 /// Unlike cgmath::Point3 it uses spherical coordinates instead of cartesian.
@@ -10,10 +10,11 @@ use cgmath::num_traits::Float;
 /// theta (θ) is the polar angle between the positive part of Y axis and the OP line segment.
 /// phi (φ) is the azimuth or azimuthal angle, an angle between the positive part of Z axis and the orthogonal projection of the line segment OP on the OXZ plane.
 /// All angles are given in radians
+#[derive(PartialEq, Eq, Copy, Clone, Hash)]
 pub struct SphericalPoint3<T> {
-    r: T,
-    theta: T,
-    phi: T,
+    pub r: T,
+    pub theta: T,
+    pub phi: T,
 }
 
 impl<T> SphericalPoint3<T> {

@@ -2,6 +2,7 @@ extern crate gl;
 extern crate glfw;
 
 use std::boxed::Box;
+use std::f32::consts::FRAC_PI_8;
 use std::sync::mpsc::Receiver;
 
 use cgmath::Point3;
@@ -12,6 +13,7 @@ use observer::RenderLoopObserver;
 use xmas_tree::XmasTree;
 
 use crate::camera::Camera;
+use crate::coords::SphericalPoint3;
 use crate::lights::Lights;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
@@ -28,6 +30,21 @@ mod xmas_tree;
 // settings
 const SCR_WIDTH: u32 = 1920;
 const SCR_HEIGHT: u32 = 1080;
+
+struct Scene {
+    camera_position: SphericalPoint3<f32>,
+    camera: Camera,
+    obj: Box<dyn Drawable>,
+}
+
+impl Scene {
+    fn new(window: &Window) -> Self {
+        let camera_position = SphericalPoint3::from(Point3::new(15., 12., 12.));
+        let camera = Camera::new(camera_position.into(), Point3::new(0., 0., 0.), &window);
+        let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
+        Scene { camera_position, camera, obj }
+    }
+}
 
 fn main() {
     // glfw: initialize and configure
@@ -50,15 +67,13 @@ fn main() {
     // lights.add(Point3::new(10., 100., 10.), 1., 1., 1.);
     lights.add(Point3::new(5., 6., 2.), 1., 1., 1.);
 
-    let camera_position = Point3::new(15., 12., 12.);
-    let mut camera = Camera::new(camera_position, Point3::new(0., 0., 0.), &window);
-    let mut obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
+    let mut scene = Scene::new(&window);
     let mut fps_calculator = FpsCalculator::new();
 
     // render loop
     while !window.should_close() {
-        process_events(&mut window, &events, &mut camera);
-        render(&mut obj);
+        process_events(&mut window, &events, &mut scene);
+        render(&mut scene);
         window.swap_buffers();
         glfw.poll_events();
         fps_calculator.tick();
@@ -78,24 +93,41 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
     (window, events)
 }
 
-fn render(obj: &mut Box<dyn Drawable>) {
+fn render(scene: &mut Scene) {
     unsafe {
         gl::ClearColor(0., 0., 0., 1.0);
         gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        obj.draw();
+        scene.obj.draw();
     }
 }
 
-fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>, camera: &mut Camera) {
+fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>, scene: &mut Scene) {
     for (_, event) in glfw::flush_messages(events) {
+        let angle_change = FRAC_PI_8 / 4.;
         match event {
             glfw::WindowEvent::FramebufferSize(width, height) => {
                 // make sure the viewport matches the new window dimensions; note that width and
                 // height will be significantly larger than specified on retina displays.
                 unsafe { gl::Viewport(0, 0, width, height) }
-                camera.on_window_resize(&window);
+                scene.camera.on_window_resize(&window);
             }
             glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => window.set_should_close(true),
+            glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) | glfw::WindowEvent::Key(Key::Right, _, Action::Repeat, _) => {
+                scene.camera_position.phi += angle_change;
+                scene.camera.set_position(scene.camera_position.into(), Point3::new(0., 0., 0.));
+            },
+            glfw::WindowEvent::Key(Key::Left, _, Action::Press, _) | glfw::WindowEvent::Key(Key::Left, _, Action::Repeat, _) => {
+                scene.camera_position.phi -= angle_change;
+                scene.camera.set_position(scene.camera_position.into(), Point3::new(0., 0., 0.));
+            },
+            glfw::WindowEvent::Key(Key::Up, _, Action::Press, _) | glfw::WindowEvent::Key(Key::Up, _, Action::Repeat, _) => {
+                scene.camera_position.theta -= angle_change;
+                scene.camera.set_position(scene.camera_position.into(), Point3::new(0., 0., 0.));
+            },
+            glfw::WindowEvent::Key(Key::Down, _, Action::Press, _) | glfw::WindowEvent::Key(Key::Down, _, Action::Repeat, _) => {
+                scene.camera_position.theta += angle_change;
+                scene.camera.set_position(scene.camera_position.into(), Point3::new(0., 0., 0.));
+            },
             _ => {}
         }
     }
