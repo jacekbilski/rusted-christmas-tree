@@ -13,12 +13,12 @@ layout (std140) uniform Camera {
 layout (std140) uniform Lights {
     vec3 lightPosition;
     vec3 lightColour;
+    float ambientStrength;
+    float specularStrength;
+    float diffuseStrength;
 };
 
 out vec4 FragColor;
-
-const float ambientStrength = 0.1;
-const float specularStrength = 0.5;
 
 void main() {
     vec3 ambient = ambientStrength * lightColour;
@@ -26,7 +26,7 @@ void main() {
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(lightPosition - FragPosition);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = diff * lightColour;
+    vec3 diffuse = diffuseStrength * diff * lightColour;
 
     vec3 viewDir = normalize(cameraPosition - FragPosition);
     vec3 reflectDir = reflect(-lightDir, norm);

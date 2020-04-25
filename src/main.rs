@@ -64,8 +64,8 @@ fn main() {
     }
 
     let mut lights = Lights::setup();
-    // lights.add(Point3::new(10., 100., 10.), 1., 1., 1.);
-    lights.add(Point3::new(5., 6., 2.), 1., 1., 1.);
+    // lights.add(Point3::new(10., 100., 10.), 1., 1., 1., 0.5, 0.2, 0.);
+    lights.add(Point3::new(5., 6., 2.), 1., 1., 1., 0.3, 0.8, 0.);
 
     let mut scene = Scene::new(&window);
     let mut fps_calculator = FpsCalculator::new();
