@@ -1,10 +1,11 @@
 use core::f32::consts::PI;
 
 use cgmath::{Point3, vec3, Vector3};
+use tobj;
 
 use crate::material::Material;
 
-pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
+pub fn gen_objects_old() -> (Vec<f32>, Vec<u32>, Material) {
     let slices = 40 as u32;
 
     let mut vertices: Vec<f32> = Vec::with_capacity(6 * (slices + 1) as usize);
@@ -54,4 +55,29 @@ fn gen_tree_segment(slices: u32, vertices: &mut Vec<f32>, indices: &mut Vec<u32>
         }
     }
     indices.extend([indices_offset + 2 * (slices - 1), indices_offset + 2 * (slices - 1) + 1, indices_offset].iter());
+}
+
+pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
+    let colour: [f32; 3] = [0., 1., 0.];
+    let tree = tobj::load_obj("tree.obj");
+    assert!(tree.is_ok());
+    let (models, materials) = tree.unwrap();
+    let vertices_count: usize = models.iter().map(|m| m.mesh.positions.len()).sum::<usize>() / 3;
+    let indices_count: usize = models.iter().map(|m| m.mesh.indices.len()).sum::<usize>() / 3;
+    let mut vertices: Vec<f32> = Vec::with_capacity(9 * vertices_count);
+    let mut indices: Vec<u32> = Vec::with_capacity(3 * indices_count as usize);
+    for mi in 0..models.len() {
+        let mesh = models[mi].mesh.clone();
+        for vi in (0..mesh.positions.len()).step_by(3) {
+            vertices.push(mesh.positions[vi]);
+            vertices.push(mesh.positions[vi+1]);
+            vertices.push(mesh.positions[vi+2]);
+            vertices.extend(colour.iter());
+            vertices.push(mesh.normals[vi]);
+            vertices.push(mesh.normals[vi+1]);
+            vertices.push(mesh.normals[vi+2]);
+        }
+        indices.extend(mesh.indices.iter());
+    }
+    (vertices, indices)
 }
