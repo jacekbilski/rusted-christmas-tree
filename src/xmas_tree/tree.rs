@@ -6,19 +6,18 @@ use crate::material::Material;
 
 pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
     let slices = 40 as u32;
-    let colour: [f32; 3] = [0., 1., 0.];
 
-    let mut vertices: Vec<f32> = Vec::with_capacity(9 * (slices + 1) as usize);
+    let mut vertices: Vec<f32> = Vec::with_capacity(6 * (slices + 1) as usize);
     let mut indices: Vec<u32> = Vec::with_capacity(3 * (slices + 1) as usize);
 
     // lower segment
-    gen_tree_segment(slices, colour, &mut vertices, &mut indices, 4., 0, -3., 5.);
+    gen_tree_segment(slices, &mut vertices, &mut indices, 4., 0, -3., 5.);
 
     // middle segment
-    gen_tree_segment(slices, colour, &mut vertices, &mut indices, 3., 1, 0., 3.);
+    gen_tree_segment(slices, &mut vertices, &mut indices, 3., 1, 0., 3.);
 
     // upper segment
-    gen_tree_segment(slices, colour, &mut vertices, &mut indices, 2., 2, 2., 2.);
+    gen_tree_segment(slices, &mut vertices, &mut indices, 2., 2, 2., 2.);
 
     let ambient: Vector3<f32> = vec3(1., 1., 1.);
     let diffuse: Vector3<f32> = vec3(0.059511, 0.119538, 0.031896);
@@ -29,7 +28,7 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
     (vertices, indices, material)
 }
 
-fn gen_tree_segment(slices: u32, colour: [f32; 3], vertices: &mut Vec<f32>, indices: &mut Vec<u32>, radius: f32, segment: u32, segments_bottom: f32, segments_height: f32) {
+fn gen_tree_segment(slices: u32, vertices: &mut Vec<f32>, indices: &mut Vec<u32>, radius: f32, segment: u32, segments_bottom: f32, segments_height: f32) {
     let angle_diff = PI * 2. / slices as f32;
     let indices_offset = 2 * segment * slices;
     for i in 0..slices {
@@ -44,12 +43,10 @@ fn gen_tree_segment(slices: u32, colour: [f32; 3], vertices: &mut Vec<f32>, indi
 
         let bottom_vertex_arr: [f32; 3] = bottom_vertex.into();
         vertices.extend(bottom_vertex_arr.iter());
-        vertices.extend(colour.iter());
         vertices.extend(normal.iter());
 
         let upper_vertex_arr: [f32; 3] = upper_vertex.into();
         vertices.extend(upper_vertex_arr.iter());
-        vertices.extend(colour.iter());
         vertices.extend(normal.iter());
 
         if i != slices - 1 {

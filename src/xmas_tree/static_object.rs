@@ -42,19 +42,15 @@ impl StaticObject {
 
             within_vao_context();
 
-            let stride = 9 * mem::size_of::<GLfloat>() as GLsizei;
+            let stride = 6 * mem::size_of::<GLfloat>() as GLsizei;
             // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
             // this call also connects my VBO to this attribute
             gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
             gl::EnableVertexAttribArray(0); // enable the attribute for position
 
-            // second three floats are for colour, last param is used to point to values within single vertex
+            // second three floats are for normal vector
             gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
             gl::EnableVertexAttribArray(1); // enable the attribute for colour
-
-            // third three floats are for normal vector used for lightning calculations
-            gl::VertexAttribPointer(2, 3, gl::FLOAT, gl::FALSE, stride, (6 * mem::size_of::<GLfloat>()) as *const c_void);
-            gl::EnableVertexAttribArray(2); // enable the attribute for normal vector
 
             gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind my VBO
             // do NOT unbind EBO, VAO would remember that

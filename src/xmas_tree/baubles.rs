@@ -38,7 +38,7 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
         Bauble { center: Point3::new(4.0, -2.0, 0.0), colour: yellow }
     ];
 
-    let mut vertices: Vec<f32> = Vec::with_capacity(9 * 2 * precision.pow(2) as usize);
+    let mut vertices: Vec<f32> = Vec::with_capacity(6 * 2 * precision.pow(2) as usize);
     let mut indices: Vec<u32> = Vec::with_capacity(3 * 4 * precision.pow(2) as usize);
 
     for i in 0..baubles.len() {
@@ -55,7 +55,7 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
 }
 
 fn gen_sphere(vertices: &mut Vec<f32>, indices: &mut Vec<u32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
-    let vertices_offset = vertices.len() / 9;
+    let vertices_offset = vertices.len() / 6;
     gen_vertices(vertices, center, radius, precision, colour);
     gen_indices(indices, precision, vertices_offset)
 }
@@ -64,7 +64,6 @@ fn gen_vertices(vertices: &mut Vec<f32>, center: Point3<f32>, radius: f32, preci
     let angle_diff = PI / precision as f32;
 
     vertices.extend([center.x, center.y + radius, center.z].iter());
-    vertices.extend(colour.iter());
     vertices.extend([0., 1., 0.].iter());
 
     for layer in 1..precision {
@@ -76,13 +75,11 @@ fn gen_vertices(vertices: &mut Vec<f32>, center: Point3<f32>, radius: f32, preci
 
             let vertex_arr: [f32; 3] = vertex.into();
             vertices.extend(vertex_arr.iter());
-            vertices.extend(colour.iter());
             vertices.extend([h_angle.sin(), v_angle.cos(), h_angle.cos()].iter());
         }
     }
 
     vertices.extend([center.x, center.y - radius, center.z].iter());
-    vertices.extend(colour.iter());
     vertices.extend([0., -1., 0.].iter());
 }
 

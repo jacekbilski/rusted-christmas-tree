@@ -9,7 +9,6 @@ struct Material {
 
 uniform Material material;
 in vec3 FragPosition;
-in vec3 Colour;
 in vec3 Normal;
 
 layout (std140) uniform Camera {
@@ -41,5 +40,5 @@ void main() {
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
     vec3 specular = specularStrength * spec * lightColour * material.specular;
 
-    FragColor = vec4((ambient + diffuse + specular) * Colour, 1.0);
+    FragColor = vec4(ambient + diffuse + specular, 1.0);
 }

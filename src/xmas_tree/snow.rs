@@ -67,7 +67,6 @@ impl Snow {
 
     fn gen_objects() -> (Vec<f32>, Vec<u32>) {
         let radius: f32 = 0.05;
-        let colour: [f32; 3] = [1., 1., 1.];
         let normal: [f32; 3] = [1., 0., 0.];
         let neg_normal: [f32; 3] = [-1., 0., 0.];
         let mut vertices: Vec<f32> = vec![];
@@ -78,11 +77,9 @@ impl Snow {
             let angle = i as f32 * angle_diff;
             // upper side
             vertices.extend([0., radius * angle.cos(), radius * angle.sin()].iter());
-            vertices.extend(colour.iter());
             vertices.extend(normal.iter());
             // bottom side
             vertices.extend([-0., -radius * angle.cos(), -radius * angle.sin()].iter());
-            vertices.extend(colour.iter());
             vertices.extend(neg_normal.iter());
         }
         let indices: Vec<u32> = vec![
@@ -106,19 +103,15 @@ impl Snow {
             Self::create_vbo(vertices);
             Self::create_ebo(&self.indices);
 
-            let stride = 9 * mem::size_of::<GLfloat>() as GLsizei;
+            let stride = 6 * mem::size_of::<GLfloat>() as GLsizei;
             // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
             // this call also connects my VBO to this attribute
             gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
             gl::EnableVertexAttribArray(0); // enable the attribute for position
 
-            // second three floats are for colour, last param is used to point to values within single vertex
+            // second three floats are for normal vector
             gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
             gl::EnableVertexAttribArray(1); // enable the attribute for colour
-
-            // third three floats are for normal vector used for lightning calculations
-            gl::VertexAttribPointer(2, 3, gl::FLOAT, gl::FALSE, stride, (6 * mem::size_of::<GLfloat>()) as *const c_void);
-            gl::EnableVertexAttribArray(2); // enable the attribute for normal vector
 
             // enter instancing, using completely different VBO
             // model matrix with rotation and translation
@@ -126,18 +119,18 @@ impl Snow {
             let mat4_size = mem::size_of::<Matrix4<f32>>() as i32;
             let vec4_size = mem::size_of::<Vector4<f32>>() as i32;
             // I need to do the calls below 4 times, because size can be at most 4, but I'm sending a matrix of size 16
-            gl::VertexAttribPointer(3, 4, gl::FLOAT, gl::FALSE, mat4_size, ptr::null());
-            gl::VertexAttribPointer(4, 4, gl::FLOAT, gl::FALSE, mat4_size, vec4_size as *const c_void);
-            gl::VertexAttribPointer(5, 4, gl::FLOAT, gl::FALSE, mat4_size, (2 * vec4_size) as *const c_void);
-            gl::VertexAttribPointer(6, 4, gl::FLOAT, gl::FALSE, mat4_size, (3 * vec4_size) as *const c_void);
+            gl::VertexAttribPointer(2, 4, gl::FLOAT, gl::FALSE, mat4_size, ptr::null());
+            gl::VertexAttribPointer(3, 4, gl::FLOAT, gl::FALSE, mat4_size, vec4_size as *const c_void);
+            gl::VertexAttribPointer(4, 4, gl::FLOAT, gl::FALSE, mat4_size, (2 * vec4_size) as *const c_void);
+            gl::VertexAttribPointer(5, 4, gl::FLOAT, gl::FALSE, mat4_size, (3 * vec4_size) as *const c_void);
+            gl::EnableVertexAttribArray(2);
             gl::EnableVertexAttribArray(3);
             gl::EnableVertexAttribArray(4);
             gl::EnableVertexAttribArray(5);
-            gl::EnableVertexAttribArray(6);
+            gl::VertexAttribDivisor(2, 1);    // every iteration
             gl::VertexAttribDivisor(3, 1);    // every iteration
             gl::VertexAttribDivisor(4, 1);    // every iteration
             gl::VertexAttribDivisor(5, 1);    // every iteration
-            gl::VertexAttribDivisor(6, 1);    // every iteration
 
             gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind my VBO
             // do NOT unbind EBO, VAO would remember that
