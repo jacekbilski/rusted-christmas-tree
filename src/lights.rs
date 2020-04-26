@@ -35,8 +35,7 @@ impl Lights {
             gl::GenBuffers(1, &mut light_ubo);
             gl::BindBuffer(gl::UNIFORM_BUFFER, light_ubo);
             let vector3_size = mem::size_of::<Vector4<f32>>() as isize; // there's no mistake, Vector3 takes the same amount of memory as Vector4
-            let int_size = mem::size_of::<GLint>() as isize;
-            gl::BufferData(gl::UNIFORM_BUFFER, int_size + MAX_LIGHTS as isize * 4 * vector3_size, ptr::null(), gl::STATIC_DRAW);
+            gl::BufferData(gl::UNIFORM_BUFFER, 16 + MAX_LIGHTS as isize * 4 * vector3_size, ptr::null(), gl::STATIC_DRAW);
             gl::BindBufferBase(gl::UNIFORM_BUFFER, LIGHTS_UBO_BINDING_POINT, light_ubo);
             gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
             light_ubo
@@ -44,9 +43,9 @@ impl Lights {
     }
 
     pub fn add(&mut self, position: Point3<f32>, ambient: Vector3<f32>, diffuse: Vector3<f32>, specular: Vector3<f32>) {
-        let lights_no= self.lights.len() as isize;
         let light = Light {position, ambient, diffuse, specular};
         self.lights.push(light);
+        let lights_no= self.lights.len() as isize;
         unsafe {
             let int_size = mem::size_of::<GLint>() as isize;
             let vector3_size = mem::size_of::<Vector4<f32>>() as isize;
@@ -54,10 +53,10 @@ impl Lights {
             println!("lights_no: {}, int_size: {}, vector3_size: {}, light_size: {}", lights_no, int_size, vector3_size, light_size);
             gl::BindBuffer(gl::UNIFORM_BUFFER, self.ubo);
             gl::BufferSubData(gl::UNIFORM_BUFFER, 0, int_size, &lights_no as *const isize as *const c_void);
-            gl::BufferSubData(gl::UNIFORM_BUFFER, 16 + lights_no * light_size + 0 * vector3_size, vector3_size, position.as_ptr() as *const c_void);
-            gl::BufferSubData(gl::UNIFORM_BUFFER, 16 + lights_no * light_size + 1 * vector3_size, vector3_size, ambient.as_ptr() as *const c_void);
-            gl::BufferSubData(gl::UNIFORM_BUFFER, 16 + lights_no * light_size + 2 * vector3_size, vector3_size, diffuse.as_ptr() as *const c_void);
-            gl::BufferSubData(gl::UNIFORM_BUFFER, 16 + lights_no * light_size + 3 * vector3_size, vector3_size, specular.as_ptr() as *const c_void);
+            gl::BufferSubData(gl::UNIFORM_BUFFER, 16 + (lights_no - 1) * light_size + 0 * vector3_size, vector3_size, position.as_ptr() as *const c_void);
+            gl::BufferSubData(gl::UNIFORM_BUFFER, 16 + (lights_no - 1) * light_size + 1 * vector3_size, vector3_size, ambient.as_ptr() as *const c_void);
+            gl::BufferSubData(gl::UNIFORM_BUFFER, 16 + (lights_no - 1) * light_size + 2 * vector3_size, vector3_size, diffuse.as_ptr() as *const c_void);
+            gl::BufferSubData(gl::UNIFORM_BUFFER, 16 + (lights_no - 1) * light_size + 3 * vector3_size, vector3_size, specular.as_ptr() as *const c_void);
             gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
         }
     }
