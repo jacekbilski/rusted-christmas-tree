@@ -1,4 +1,8 @@
-pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
+use cgmath::{vec3, Vector3};
+
+use crate::material::Material;
+
+pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
     let vertices: Vec<f32> = vec![
         // position, colour, normal vector
         -10., -5., -10., 1., 1., 1., 0., 1., 0., // far
@@ -11,5 +15,11 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
         1, 2, 3,
     ];
 
-    (vertices, indices)
+    let ambient: Vector3<f32> = vec3(1., 1., 1.);
+    let diffuse: Vector3<f32> = vec3(0.623960, 0.686685, 0.693872);
+    let specular: Vector3<f32> = vec3(0.5, 0.5, 0.5);
+    let shininess: f32 = 225.;
+    let material = Material { ambient, diffuse, specular, shininess };
+
+    (vertices, indices, material)
 }

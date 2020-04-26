@@ -1,13 +1,15 @@
 use core::f32::consts::PI;
 
-use cgmath::Point3;
+use cgmath::{Point3, vec3, Vector3};
+
+use crate::material::Material;
 
 struct Bauble {
     center: Point3<f32>,
     colour: [f32; 3],
 }
 
-pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
+pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
     let precision = 8 as u32;
     let radius = 0.2 as f32;
 
@@ -43,9 +45,13 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
         gen_sphere(&mut vertices, &mut indices, baubles[i].center, radius, precision, &baubles[i].colour);
     }
 
-    // println!("Vertices, len: '{}', data: {:?}", vertices.len(), &vertices);
-    // println!("Indices: {:?}", &indices);
-    (vertices, indices)
+    let ambient: Vector3<f32> = vec3(0.1745, 0.01175, 0.01175);
+    let diffuse: Vector3<f32> = vec3(0.61424, 0.04136, 0.04136);
+    let specular: Vector3<f32> = vec3(0.727811, 0.626959, 0.626959);
+    let shininess: f32 = 76.8;
+    let material = Material { ambient, diffuse, specular, shininess };
+
+    (vertices, indices, material)
 }
 
 fn gen_sphere(vertices: &mut Vec<f32>, indices: &mut Vec<u32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {

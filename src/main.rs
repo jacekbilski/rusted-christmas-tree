@@ -23,6 +23,7 @@ mod coords;
 mod drawable;
 mod fps_calculator;
 mod lights;
+mod material;
 mod observer;
 mod shader;
 mod xmas_tree;

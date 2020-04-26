@@ -6,6 +6,8 @@ use std::io::Read;
 use std::ptr;
 use std::str;
 
+use cgmath::Vector3;
+
 use self::gl::types::*;
 
 pub const CAMERA_UBO_BINDING_POINT: u32 = 0;
@@ -74,6 +76,22 @@ impl Shader {
             ensure_compilation_success(ShaderType::FragmentShader, fragment_shader);
             gl::AttachShader(self.id, fragment_shader);
             fragment_shader
+        }
+    }
+
+    pub fn set_vector3(&self, name: &str, vec: Vector3<f32>) {
+        unsafe {
+            let c_name = CString::new(name).unwrap();
+            let location = gl::GetUniformLocation(self.id, c_name.as_ptr());
+            gl::Uniform3f(location, vec[0], vec[1], vec[2]);
+        }
+    }
+
+    pub fn set_float(&self, name: &str, f: f32) {
+        unsafe {
+            let c_name = CString::new(name).unwrap();
+            let location = gl::GetUniformLocation(self.id, c_name.as_ptr());
+            gl::Uniform1f(location, f);
         }
     }
 }

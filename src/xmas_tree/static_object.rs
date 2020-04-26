@@ -1,10 +1,12 @@
 extern crate gl;
 
+use std::ffi::CString;
 use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
 use crate::drawable::Drawable;
+use crate::material::Material;
 use crate::shader::Shader;
 
 use self::gl::types::*;
@@ -17,10 +19,11 @@ pub struct StaticObject {
     shader: Shader,
     vao: VAO,
     indices: Vec<u32>,
+    material: Material,
 }
 
 impl StaticObject {
-    pub fn new(vertices: Vec<f32>, indices: Vec<u32>) -> Self {
+    pub fn new(vertices: Vec<f32>, indices: Vec<u32>, material: Material) -> Self {
         let within_vao = || {
             Self::create_vbo(&vertices);
             Self::create_ebo(&indices);
@@ -28,7 +31,7 @@ impl StaticObject {
         let vao = Self::create_vao(within_vao);
         let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
 
-        Self { shader, vao, indices }
+        Self { shader, vao, indices, material }
     }
 
     fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
@@ -83,6 +86,13 @@ impl StaticObject {
                            gl::STATIC_DRAW); // actually fill ELEMENT_ARRAY_BUFFER with data
         }
     }
+
+    fn load_material(&self) {
+        self.shader.set_vector3("material.ambient", self.material.ambient);
+        self.shader.set_vector3("material.diffuse", self.material.diffuse);
+        self.shader.set_vector3("material.specular", self.material.specular);
+        self.shader.set_float("material.shininess", self.material.shininess);
+    }
 }
 
 impl Drawable for StaticObject {
@@ -90,6 +100,7 @@ impl Drawable for StaticObject {
         unsafe {
             gl::UseProgram(self.shader.id);
             gl::BindVertexArray(self.vao);
+            self.load_material();
             gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
             gl::BindVertexArray(0);
         }

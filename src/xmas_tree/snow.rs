@@ -12,6 +12,7 @@ use rand::distributions::Uniform;
 use rand::rngs::SmallRng;
 
 use crate::drawable::Drawable;
+use crate::material::Material;
 use crate::shader::Shader;
 
 use self::gl::types::*;
@@ -43,6 +44,7 @@ pub struct Snow {
     instances_vbo: VBO,
     indices: Vec<u32>,
     instances: Vec<Instance>,
+    material: Material,
 }
 
 impl Snow {
@@ -51,7 +53,14 @@ impl Snow {
         let (vertices, indices) = Snow::gen_objects();
         let instances = Snow::gen_instances();
         let instances_vbo = Self::create_instances_vbo();
-        let mut snow = Self { shader, vao: 0, instances_vbo, indices, instances };
+
+        let ambient: Vector3<f32> = vec3(1., 1., 1.);
+        let diffuse: Vector3<f32> = vec3(0.623960, 0.686685, 0.693872);
+        let specular: Vector3<f32> = vec3(0.5, 0.5, 0.5);
+        let shininess: f32 = 225.;
+        let material = Material { ambient, diffuse, specular, shininess };
+
+        let mut snow = Self { shader, vao: 0, instances_vbo, indices, instances, material };
         snow.vao = snow.create_vao(&vertices);
         snow
     }
@@ -236,6 +245,13 @@ impl Snow {
             instances_vbo
         }
     }
+
+    fn load_material(&self) {
+        self.shader.set_vector3("material.ambient", self.material.ambient);
+        self.shader.set_vector3("material.diffuse", self.material.diffuse);
+        self.shader.set_vector3("material.specular", self.material.specular);
+        self.shader.set_float("material.shininess", self.material.shininess);
+    }
 }
 
 impl Drawable for Snow {
@@ -245,6 +261,7 @@ impl Drawable for Snow {
         unsafe {
             gl::UseProgram(self.shader.id);
             gl::BindVertexArray(self.vao);
+            self.load_material();
             gl::DrawElementsInstanced(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), MAX_FLAKES as i32);
             gl::BindVertexArray(0);
         }

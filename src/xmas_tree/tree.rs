@@ -1,8 +1,10 @@
 use core::f32::consts::PI;
 
-use cgmath::Point3;
+use cgmath::{Point3, vec3, Vector3};
 
-pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
+use crate::material::Material;
+
+pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
     let slices = 40 as u32;
     let colour: [f32; 3] = [0., 1., 0.];
 
@@ -18,7 +20,13 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
     // upper segment
     gen_tree_segment(slices, colour, &mut vertices, &mut indices, 2., 2, 2., 2.);
 
-    (vertices, indices)
+    let ambient: Vector3<f32> = vec3(1., 1., 1.);
+    let diffuse: Vector3<f32> = vec3(0.059511, 0.119538, 0.031896);
+    let specular: Vector3<f32> = vec3(0.5, 0.5, 0.5);
+    let shininess: f32 = 225.;
+    let material = Material { ambient, diffuse, specular, shininess };
+
+    (vertices, indices, material)
 }
 
 fn gen_tree_segment(slices: u32, colour: [f32; 3], vertices: &mut Vec<f32>, indices: &mut Vec<u32>, radius: f32, segment: u32, segments_bottom: f32, segments_height: f32) {
