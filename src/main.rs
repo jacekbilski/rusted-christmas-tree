@@ -5,7 +5,7 @@ use std::boxed::Box;
 use std::f32::consts::FRAC_PI_8;
 use std::sync::mpsc::Receiver;
 
-use cgmath::Point3;
+use cgmath::{Point3, vec3};
 
 use drawable::Drawable;
 use fps_calculator::FpsCalculator;
@@ -65,8 +65,8 @@ fn main() {
     }
 
     let mut lights = Lights::setup();
-    // lights.add(Point3::new(10., 100., 10.), 1., 1., 1., 0.5, 0.2, 0.);
-    lights.add(Point3::new(5., 6., 2.), 1., 1., 1., 0.3, 0.8, 0.);
+    // lights.add(Point3::new(10., 100., 10.), vec3(0.3, 0.3, 0.3), vec3(0.2, 0.2, 0.2), vec3(0., 0., 0.));
+    lights.add(Point3::new(5., 6., 2.), vec3(0.2, 0.2, 0.2), vec3(2., 2., 2.), vec3(0.5, 0.5, 0.5));
 
     let mut scene = Scene::new(&window);
     let mut fps_calculator = FpsCalculator::new();

@@ -19,9 +19,9 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
     // upper segment
     gen_tree_segment(slices, &mut vertices, &mut indices, 2., 2, 2., 2.);
 
-    let ambient: Vector3<f32> = vec3(1., 1., 1.);
-    let diffuse: Vector3<f32> = vec3(0.059511, 0.119538, 0.031896);
-    let specular: Vector3<f32> = vec3(0.5, 0.5, 0.5);
+    let ambient: Vector3<f32> = vec3(0.02, 0.35, 0.01);
+    let diffuse: Vector3<f32> = vec3(0.02, 0.35, 0.01);
+    let specular: Vector3<f32> = vec3(0.1, 0.1, 0.1);
     let shininess: f32 = 225.;
     let material = Material { ambient, diffuse, specular, shininess };
 

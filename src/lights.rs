@@ -8,16 +8,21 @@ use cgmath::prelude::*;
 
 use crate::shader::LIGHTS_UBO_BINDING_POINT;
 
+struct Light {
+    position: Point3<f32>,
+    ambient: Vector3<f32>,
+    diffuse: Vector3<f32>,
+    specular: Vector3<f32>,
+}
+
 pub struct Lights {
     ubo: u32,
-    position: Vec<Point3<f32>>,
-    colour: Vec<Vector3<f32>>,
-    strength: Vec<Vector3<f32>>,    // x: ambient, y: diffuse, z: specular
+    lights: Vec<Light>,
 }
 
 impl Lights {
     pub fn setup() -> Self {
-        Lights { ubo: Lights::setup_lights_ubo(), position: vec![], colour: vec![], strength: vec![] }
+        Lights { ubo: Lights::setup_lights_ubo(), lights: vec![] }
     }
 
     fn setup_lights_ubo() -> u32 {
@@ -26,25 +31,23 @@ impl Lights {
             gl::GenBuffers(1, &mut light_ubo);
             gl::BindBuffer(gl::UNIFORM_BUFFER, light_ubo);
             let vector3_size = mem::size_of::<Vector4<f32>>() as isize; // there's no mistake, Vector3 takes the same amount of memory as Vector4
-            gl::BufferData(gl::UNIFORM_BUFFER, 3 * vector3_size, ptr::null(), gl::STATIC_DRAW);
+            gl::BufferData(gl::UNIFORM_BUFFER, 4 * vector3_size, ptr::null(), gl::STATIC_DRAW);
             gl::BindBufferBase(gl::UNIFORM_BUFFER, LIGHTS_UBO_BINDING_POINT, light_ubo);
             gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
             light_ubo
         }
     }
 
-    pub fn add(&mut self, position: Point3<f32>, red: f32, green: f32, blue: f32, ambient_strength: f32, diffuse_strength: f32, specular_strength: f32) {
+    pub fn add(&mut self, position: Point3<f32>, ambient: Vector3<f32>, diffuse: Vector3<f32>, specular: Vector3<f32>) {
         let vector3_size = mem::size_of::<Vector4<f32>>() as isize;
-        let colour: Vector3<f32> = vec3(red, green, blue);
-        let strength: Vector3<f32> = vec3(ambient_strength, diffuse_strength, specular_strength);
-        self.position.push(position);
-        self.colour.push(colour);
-        self.strength.push(strength);
+        let light = Light {position, ambient, diffuse, specular};
+        self.lights  = vec![light]; // so far only one is supported
         unsafe {
             gl::BindBuffer(gl::UNIFORM_BUFFER, self.ubo);
             gl::BufferSubData(gl::UNIFORM_BUFFER, 0, vector3_size, position.as_ptr() as *const c_void);
-            gl::BufferSubData(gl::UNIFORM_BUFFER, 1 * vector3_size, vector3_size, colour.as_ptr() as *const c_void);
-            gl::BufferSubData(gl::UNIFORM_BUFFER, 2 * vector3_size, vector3_size, strength.as_ptr() as *const c_void);
+            gl::BufferSubData(gl::UNIFORM_BUFFER, 1 * vector3_size, vector3_size, ambient.as_ptr() as *const c_void);
+            gl::BufferSubData(gl::UNIFORM_BUFFER, 2 * vector3_size, vector3_size, diffuse.as_ptr() as *const c_void);
+            gl::BufferSubData(gl::UNIFORM_BUFFER, 3 * vector3_size, vector3_size, specular.as_ptr() as *const c_void);
             gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
         }
     }
