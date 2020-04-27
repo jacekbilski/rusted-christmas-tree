@@ -58,7 +58,7 @@ fn gen_tree_segment(slices: u32, vertices: &mut Vec<f32>, indices: &mut Vec<u32>
 }
 
 pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
-    let tree = tobj::load_obj("tree.obj");
+    let tree = tobj::load_obj("models/tree.obj");
     let (models, materials) = tree.unwrap();
     for i in 0..models.len() {
         println!("Found model, i: {}, name: '{}'", i, models[i].name);
