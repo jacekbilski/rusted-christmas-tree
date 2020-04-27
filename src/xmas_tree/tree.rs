@@ -57,11 +57,12 @@ fn gen_tree_segment(slices: u32, vertices: &mut Vec<f32>, indices: &mut Vec<u32>
     indices.extend([indices_offset + 2 * (slices - 1), indices_offset + 2 * (slices - 1) + 1, indices_offset].iter());
 }
 
-pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
-    let colour: [f32; 3] = [0., 1., 0.];
+pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
     let tree = tobj::load_obj("tree.obj");
-    assert!(tree.is_ok());
     let (models, materials) = tree.unwrap();
+    for i in 0..models.len() {
+        println!("Found model, i: {}, name: '{}'", i, models[i].name);
+    }
     let vertices_count: usize = models.iter().map(|m| m.mesh.positions.len()).sum::<usize>() / 3;
     let indices_count: usize = models.iter().map(|m| m.mesh.indices.len()).sum::<usize>() / 3;
     let mut vertices: Vec<f32> = Vec::with_capacity(9 * vertices_count);
@@ -72,12 +73,12 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>) {
             vertices.push(mesh.positions[vi]);
             vertices.push(mesh.positions[vi+1]);
             vertices.push(mesh.positions[vi+2]);
-            vertices.extend(colour.iter());
             vertices.push(mesh.normals[vi]);
             vertices.push(mesh.normals[vi+1]);
             vertices.push(mesh.normals[vi+2]);
         }
         indices.extend(mesh.indices.iter());
     }
-    (vertices, indices)
+    let material = Material{ambient: Vector3::from(materials[2].ambient), diffuse: Vector3::from(materials[2].diffuse), specular: Vector3::from(materials[2].specular), shininess: materials[2].shininess};
+    (vertices, indices, material)
 }

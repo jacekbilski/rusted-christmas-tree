@@ -59,9 +59,9 @@ fn main() {
     unsafe {
         gl::Enable(gl::MULTISAMPLE);
         gl::Enable(gl::DEPTH_TEST);
-        gl::Enable(gl::CULL_FACE);
-        gl::CullFace(gl::BACK);
-        gl::FrontFace(gl::CW);
+        // gl::Enable(gl::CULL_FACE);
+        // gl::CullFace(gl::BACK);
+        // gl::FrontFace(gl::CW);
     }
 
     let mut lights = Lights::setup();
