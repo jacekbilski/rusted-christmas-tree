@@ -1,19 +1,12 @@
 extern crate gl;
 extern crate glfw;
 
-use std::boxed::Box;
 use std::f32::consts::FRAC_PI_8;
 use std::sync::mpsc::Receiver;
 
-use cgmath::{Point3, vec3};
-
-use drawable::Drawable;
 use fps_calculator::FpsCalculator;
 use observer::RenderLoopObserver;
-use xmas_tree::XmasTree;
-
-use crate::camera::Camera;
-use crate::lights::Lights;
+use xmas_tree::scene::Scene;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
@@ -30,32 +23,6 @@ mod xmas_tree;
 // settings
 const SCR_WIDTH: u32 = 1920;
 const SCR_HEIGHT: u32 = 1080;
-
-struct Scene {
-    camera: Camera,
-    lights: Lights,
-    obj: Box<dyn Drawable>,
-}
-
-impl Scene {
-    fn setup(window: &Window) -> Self {
-        let camera = Camera::new(Point3::new(15., 12., 12.), Point3::new(0., 0., 0.), &window);
-        let mut lights = Lights::setup();
-        lights.add(Point3::new(10., 100., 10.), vec3(0.3, 0.3, 0.3), vec3(0.2, 0.2, 0.2), vec3(0., 0., 0.));
-        lights.add(Point3::new(5., 6., 2.), vec3(0.2, 0.2, 0.2), vec3(2., 2., 2.), vec3(0.5, 0.5, 0.5));
-
-        let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
-        Scene { camera, lights, obj }
-    }
-
-    pub fn draw(&mut self) {
-        unsafe {
-            gl::ClearColor(0., 0., 0., 1.0);
-            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            self.obj.draw();
-        }
-    }
-}
 
 fn main() {
     // glfw: initialize and configure

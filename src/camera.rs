@@ -22,7 +22,7 @@ impl Camera {
     pub fn new(position: Point3<f32>, look_at: Point3<f32>, window: &Window) -> Self {
         let (window_width, window_height) = window.get_size();
         let ubo = Camera::setup_camera_ubo();
-        let mut camera = Camera {position, look_at, ubo, window_width: window_width as f32, window_height: window_height as f32};
+        let camera = Camera {position, look_at, ubo, window_width: window_width as f32, window_height: window_height as f32};
         camera.update_uniforms();
         camera
     }
