@@ -1,14 +1,14 @@
-use cgmath::{vec3, Vector3};
+use cgmath::{Point3, vec3, Vector3};
 
 use crate::material::Material;
+use crate::xmas_tree::static_object::Vertex;
 
-pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
-    let vertices: Vec<f32> = vec![
-        // position, normal vector
-        -10., -5., -10., 0., 1., 0., // far
-        -10., -5., 10., 0., 1., 0., // left
-        10., -5., -10., 0., 1., 0., // right
-        10., -5., 10., 0., 1., 0., // near
+pub fn gen_objects() -> (Vec<Vertex>, Vec<u32>, Material) {
+    let vertices: Vec<Vertex> = vec![
+        Vertex { position: Point3::new(-10., -5., -10.), normal: vec3(0., 1., 0.) },   // far
+        Vertex { position: Point3::new(-10., -5., 10.), normal: vec3(0., 1., 0.) }, // left
+        Vertex { position: Point3::new(10., -5., -10.), normal: vec3(0., 1., 0.) }, // right
+        Vertex { position: Point3::new(10., -5., 10.), normal: vec3(0., 1., 0.) }, // near
     ];
     let indices: Vec<u32> = vec![
         0, 2, 1,

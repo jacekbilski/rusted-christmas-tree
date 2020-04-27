@@ -3,13 +3,14 @@ use core::f32::consts::PI;
 use cgmath::{Point3, vec3, Vector3};
 
 use crate::material::Material;
+use crate::xmas_tree::static_object::Vertex;
 
 struct Bauble {
     center: Point3<f32>,
     colour: [f32; 3],
 }
 
-pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
+pub fn gen_objects() -> (Vec<Vertex>, Vec<u32>, Material) {
     let precision = 8 as u32;
     let radius = 0.2 as f32;
 
@@ -38,7 +39,7 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
         Bauble { center: Point3::new(4.0, -2.0, 0.0), colour: yellow }
     ];
 
-    let mut vertices: Vec<f32> = Vec::with_capacity(6 * 2 * precision.pow(2) as usize);
+    let mut vertices: Vec<Vertex> = Vec::with_capacity(2 * precision.pow(2) as usize);
     let mut indices: Vec<u32> = Vec::with_capacity(3 * 4 * precision.pow(2) as usize);
 
     for i in 0..baubles.len() {
@@ -54,17 +55,16 @@ pub fn gen_objects() -> (Vec<f32>, Vec<u32>, Material) {
     (vertices, indices, material)
 }
 
-fn gen_sphere(vertices: &mut Vec<f32>, indices: &mut Vec<u32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
-    let vertices_offset = vertices.len() / 6;
+fn gen_sphere(vertices: &mut Vec<Vertex>, indices: &mut Vec<u32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
+    let vertices_offset = vertices.len();
     gen_vertices(vertices, center, radius, precision, colour);
     gen_indices(indices, precision, vertices_offset)
 }
 
-fn gen_vertices(vertices: &mut Vec<f32>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
+fn gen_vertices(vertices: &mut Vec<Vertex>, center: Point3<f32>, radius: f32, precision: u32, colour: &[f32; 3]) {
     let angle_diff = PI / precision as f32;
 
-    vertices.extend([center.x, center.y + radius, center.z].iter());
-    vertices.extend([0., 1., 0.].iter());
+    vertices.push(Vertex { position: Point3::new(center.x, center.y + radius, center.z), normal: vec3(0., 1., 0.) });
 
     for layer in 1..precision {
         let v_angle = angle_diff * layer as f32;   // vertically I'm doing only half rotation
@@ -73,14 +73,11 @@ fn gen_vertices(vertices: &mut Vec<f32>, center: Point3<f32>, radius: f32, preci
             let layer_radius = radius * v_angle.sin();
             let vertex = Point3::new(center.x + layer_radius * h_angle.sin(), center.y + radius * v_angle.cos(), center.z + layer_radius * h_angle.cos());
 
-            let vertex_arr: [f32; 3] = vertex.into();
-            vertices.extend(vertex_arr.iter());
-            vertices.extend([h_angle.sin(), v_angle.cos(), h_angle.cos()].iter());
+            vertices.push(Vertex { position: vertex, normal: vec3(h_angle.sin(), v_angle.cos(), h_angle.cos()) });
         }
     }
 
-    vertices.extend([center.x, center.y - radius, center.z].iter());
-    vertices.extend([0., -1., 0.].iter());
+    vertices.push(Vertex { position: Point3::new(center.x, center.y - radius, center.z), normal: vec3(0., -1., 0.) });
 }
 
 fn gen_indices(indices: &mut Vec<u32>, precision: u32, vertices_offset: usize) {

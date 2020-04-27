@@ -1,9 +1,10 @@
 extern crate gl;
 
-use std::ffi::CString;
 use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
+
+use cgmath::{Point3, Vector3};
 
 use crate::drawable::Drawable;
 use crate::material::Material;
@@ -15,6 +16,19 @@ type VBO = u32;
 type VAO = u32;
 type EBO = u32;
 
+#[repr(C)]  // to make sure memory representation is like in the code
+pub struct Vertex {
+    pub position: Point3<f32>,
+    pub normal: Vector3<f32>,
+}
+
+impl Vertex {
+    fn size() -> usize {
+        let float_size = mem::size_of::<GLfloat>();
+        2 * 3 * float_size
+    }
+}
+
 pub struct StaticObject {
     shader: Shader,
     vao: VAO,
@@ -23,7 +37,7 @@ pub struct StaticObject {
 }
 
 impl StaticObject {
-    pub fn new(vertices: Vec<f32>, indices: Vec<u32>, material: Material) -> Self {
+    pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, material: Material) -> Self {
         let within_vao = || {
             Self::create_vbo(&vertices);
             Self::create_ebo(&indices);
@@ -59,14 +73,14 @@ impl StaticObject {
         }
     }
 
-    fn create_vbo(vertices: &[f32]) {
+    fn create_vbo(vertices: &Vec<Vertex>) {
         unsafe {
             let mut vbo = 0 as VBO;
             gl::GenBuffers(1, &mut vbo); // create buffer for my data
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo); // ARRAY_BUFFER now "points" to my buffer
             gl::BufferData(gl::ARRAY_BUFFER,
-                           (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                           &vertices[0] as *const f32 as *const c_void,
+                           (vertices.len() * Vertex::size()) as GLsizeiptr,
+                           &vertices[0] as *const Vertex as *const c_void,
                            gl::STATIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
         }
     }

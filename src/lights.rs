@@ -3,7 +3,7 @@ extern crate gl;
 use std::{mem, ptr};
 use std::os::raw::c_void;
 
-use cgmath::{Point3, vec3, Vector3, Vector4};
+use cgmath::{Point3, Vector3, Vector4};
 use cgmath::prelude::*;
 
 use crate::shader::LIGHTS_UBO_BINDING_POINT;
@@ -50,7 +50,6 @@ impl Lights {
             let int_size = mem::size_of::<GLint>() as isize;
             let vector3_size = mem::size_of::<Vector4<f32>>() as isize;
             let light_size = 4 * vector3_size;
-            println!("lights_no: {}, int_size: {}, vector3_size: {}, light_size: {}", lights_no, int_size, vector3_size, light_size);
             gl::BindBuffer(gl::UNIFORM_BUFFER, self.ubo);
             gl::BufferSubData(gl::UNIFORM_BUFFER, 0, int_size, &lights_no as *const isize as *const c_void);
             gl::BufferSubData(gl::UNIFORM_BUFFER, 16 + (lights_no - 1) * light_size + 0 * vector3_size, vector3_size, position.as_ptr() as *const c_void);
