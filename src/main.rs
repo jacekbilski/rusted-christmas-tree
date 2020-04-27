@@ -38,7 +38,7 @@ struct Scene {
 }
 
 impl Scene {
-    fn new(window: &Window) -> Self {
+    fn setup(window: &Window) -> Self {
         let camera = Camera::new(Point3::new(15., 12., 12.), Point3::new(0., 0., 0.), &window);
         let mut lights = Lights::setup();
         lights.add(Point3::new(10., 100., 10.), vec3(0.3, 0.3, 0.3), vec3(0.2, 0.2, 0.2), vec3(0., 0., 0.));
@@ -46,6 +46,14 @@ impl Scene {
 
         let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
         Scene { camera, lights, obj }
+    }
+
+    pub fn draw(&mut self) {
+        unsafe {
+            gl::ClearColor(0., 0., 0., 1.0);
+            gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
+            self.obj.draw();
+        }
     }
 }
 
@@ -66,13 +74,13 @@ fn main() {
         gl::FrontFace(gl::CW);
     }
 
-    let mut scene = Scene::new(&window);
+    let mut scene = Scene::setup(&window);
     let mut fps_calculator = FpsCalculator::new();
 
     // render loop
     while !window.should_close() {
         process_events(&mut window, &events, &mut scene);
-        render(&mut scene);
+        scene.draw();
         window.swap_buffers();
         glfw.poll_events();
         fps_calculator.tick();
@@ -90,14 +98,6 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
     window.set_key_polling(true);
     window.set_framebuffer_size_polling(true);
     (window, events)
-}
-
-fn render(scene: &mut Scene) {
-    unsafe {
-        gl::ClearColor(0., 0., 0., 1.0);
-        gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-        scene.obj.draw();
-    }
 }
 
 fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>, scene: &mut Scene) {
