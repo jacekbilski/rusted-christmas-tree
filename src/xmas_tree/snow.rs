@@ -238,23 +238,19 @@ impl Snow {
             instances_vbo
         }
     }
-
-    fn load_material(&self) {
-        self.shader.set_vector3("material.ambient", self.material.ambient);
-        self.shader.set_vector3("material.diffuse", self.material.diffuse);
-        self.shader.set_vector3("material.specular", self.material.specular);
-        self.shader.set_float("material.shininess", self.material.shininess);
-    }
 }
 
 impl Drawable for Snow {
-    fn draw(&mut self) {
+    fn draw(&mut self, _shader: &Shader) {
         self.move_snowflakes();
         self.fill_instances_vbo();
         unsafe {
             gl::UseProgram(self.shader.id);
             gl::BindVertexArray(self.vao);
-            self.load_material();
+            self.shader.set_vector3("material.ambient", self.material.ambient);
+            self.shader.set_vector3("material.diffuse", self.material.diffuse);
+            self.shader.set_vector3("material.specular", self.material.specular);
+            self.shader.set_float("material.shininess", self.material.shininess);
             gl::DrawElementsInstanced(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), MAX_FLAKES as i32);
             gl::BindVertexArray(0);
         }

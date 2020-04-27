@@ -4,6 +4,7 @@ use glfw::Window;
 use crate::camera::Camera;
 use crate::drawable::Drawable;
 use crate::lights::Lights;
+use crate::shader::Shader;
 use crate::xmas_tree::{baubles, ground, tree};
 use crate::xmas_tree::mesh::Mesh;
 use crate::xmas_tree::snow::Snow;
@@ -11,6 +12,7 @@ use crate::xmas_tree::snow::Snow;
 pub struct Scene {
     pub camera: Camera,
     lights: Lights,
+    shader: Shader,
     objects: Vec<Box<dyn Drawable>>,
 }
 
@@ -21,8 +23,10 @@ impl Scene {
         lights.add(Point3::new(10., 100., 10.), vec3(0.3, 0.3, 0.3), vec3(0.2, 0.2, 0.2), vec3(0., 0., 0.));
         lights.add(Point3::new(5., 6., 2.), vec3(0.2, 0.2, 0.2), vec3(2., 2., 2.), vec3(0.5, 0.5, 0.5));
 
+        let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
+
         let objects = Scene::add_objects();
-        Scene { camera, lights, objects }
+        Scene { camera, lights, shader, objects }
     }
 
     fn add_objects() -> Vec<Box<dyn Drawable>> {
@@ -42,7 +46,7 @@ impl Scene {
             gl::ClearColor(0., 0., 0., 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             for d in &mut self.objects {
-                d.draw();
+                d.draw(&self.shader);
             }
         }
     }
