@@ -29,14 +29,14 @@ impl Vertex {
     }
 }
 
-pub struct StaticObject {
+pub struct Mesh {
     shader: Shader,
     vao: VAO,
     indices: Vec<u32>,
     material: Material,
 }
 
-impl StaticObject {
+impl Mesh {
     pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, material: Material) -> Self {
         let within_vao = || {
             Self::create_vbo(&vertices);
@@ -56,7 +56,7 @@ impl StaticObject {
 
             within_vao_context();
 
-            let stride = 6 * mem::size_of::<GLfloat>() as GLsizei;
+            let stride = Vertex::size() as GLsizei;
             // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
             // this call also connects my VBO to this attribute
             gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
@@ -105,7 +105,7 @@ impl StaticObject {
     }
 }
 
-impl Drawable for StaticObject {
+impl Drawable for Mesh {
     fn draw(&mut self) {
         unsafe {
             gl::UseProgram(self.shader.id);

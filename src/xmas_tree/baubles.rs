@@ -3,7 +3,7 @@ use core::f32::consts::PI;
 use cgmath::{Point3, vec3, Vector3};
 
 use crate::material::Material;
-use crate::xmas_tree::static_object::Vertex;
+use crate::xmas_tree::mesh::Vertex;
 
 struct Bauble {
     center: Point3<f32>,

@@ -1,7 +1,7 @@
 use cgmath::{Point3, vec3, Vector3};
 
 use crate::material::Material;
-use crate::xmas_tree::static_object::Vertex;
+use crate::xmas_tree::mesh::Vertex;
 
 pub fn gen_objects() -> (Vec<Vertex>, Vec<u32>, Material) {
     let vertices: Vec<Vertex> = vec![
