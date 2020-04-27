@@ -6,7 +6,7 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
-use cgmath::{Euler, Matrix4, Rad, vec3, Vector3, Vector4};
+use cgmath::{Euler, Matrix4, Point3, Rad, vec3, Vector3, Vector4};
 use rand::{Rng, SeedableRng};
 use rand::distributions::Uniform;
 use rand::rngs::SmallRng;
@@ -14,6 +14,7 @@ use rand::rngs::SmallRng;
 use crate::drawable::Drawable;
 use crate::material::Material;
 use crate::shader::Shader;
+use crate::xmas_tree::mesh::Vertex;
 
 use self::gl::types::*;
 
@@ -65,22 +66,20 @@ impl Snow {
         snow
     }
 
-    fn gen_objects() -> (Vec<f32>, Vec<u32>) {
+    fn gen_objects() -> (Vec<Vertex>, Vec<u32>) {
         let radius: f32 = 0.05;
-        let normal: [f32; 3] = [1., 0., 0.];
-        let neg_normal: [f32; 3] = [-1., 0., 0.];
-        let mut vertices: Vec<f32> = vec![];
+        let normal: Vector3<f32> = vec3(1., 0., 0.);
+        let neg_normal: Vector3<f32> = vec3(-1., 0., 0.);
+        let mut vertices: Vec<Vertex> = vec![];
 
         let angle_diff = PI / 3 as f32;
 
         for i in 0..6 {
             let angle = i as f32 * angle_diff;
             // upper side
-            vertices.extend([0., radius * angle.cos(), radius * angle.sin()].iter());
-            vertices.extend(normal.iter());
+            vertices.push(Vertex{position: Point3::new(0., radius * angle.cos(), radius * angle.sin()), normal });
             // bottom side
-            vertices.extend([-0., -radius * angle.cos(), -radius * angle.sin()].iter());
-            vertices.extend(neg_normal.iter());
+            vertices.push(Vertex{position: Point3::new(-0., -radius * angle.cos(), -radius * angle.sin()), normal: -normal });
         }
         let indices: Vec<u32> = vec![
             // upper side
@@ -94,7 +93,7 @@ impl Snow {
         (vertices, indices)
     }
 
-    fn create_vao(&self, vertices: &[f32]) -> VAO {
+    fn create_vao(&self, vertices: &Vec<Vertex>) -> VAO {
         unsafe {
             let mut vao = 0 as VAO;
             gl::GenVertexArrays(1, &mut vao); // create VAO
@@ -103,7 +102,7 @@ impl Snow {
             Self::create_vbo(vertices);
             Self::create_ebo(&self.indices);
 
-            let stride = 6 * mem::size_of::<GLfloat>() as GLsizei;
+            let stride = Vertex::size() as GLsizei;
             // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
             // this call also connects my VBO to this attribute
             gl::VertexAttribPointer(0, 3, gl::FLOAT, gl::FALSE, stride, ptr::null());
@@ -139,14 +138,14 @@ impl Snow {
         }
     }
 
-    fn create_vbo(vertices: &[f32]) {
+    fn create_vbo(vertices: &Vec<Vertex>) {
         unsafe {
             let mut vbo = 0 as VBO;
             gl::GenBuffers(1, &mut vbo); // create buffer for my data
             gl::BindBuffer(gl::ARRAY_BUFFER, vbo); // ARRAY_BUFFER now "points" to my buffer
             gl::BufferData(gl::ARRAY_BUFFER,
-                           (vertices.len() * mem::size_of::<GLfloat>()) as GLsizeiptr,
-                           &vertices[0] as *const f32 as *const c_void,
+                           (vertices.len() * Vertex::size()) as GLsizeiptr,
+                           &vertices[0] as *const Vertex as *const c_void,
                            gl::STATIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
         }
     }

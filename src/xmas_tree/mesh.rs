@@ -17,13 +17,14 @@ type VAO = u32;
 type EBO = u32;
 
 #[repr(C)]  // to make sure memory representation is like in the code
+#[derive(Debug)]
 pub struct Vertex {
     pub position: Point3<f32>,
     pub normal: Vector3<f32>,
 }
 
 impl Vertex {
-    fn size() -> usize {
+    pub fn size() -> usize {
         let float_size = mem::size_of::<GLfloat>();
         2 * 3 * float_size
     }
