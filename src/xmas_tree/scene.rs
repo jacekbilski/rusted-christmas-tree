@@ -13,7 +13,8 @@ pub struct Scene {
     pub camera: Camera,
     lights: Lights,
     shader: Shader,
-    objects: Vec<Box<dyn Drawable>>,
+    meshes: Vec<Mesh>,
+    snow: Snow,
 }
 
 impl Scene {
@@ -25,19 +26,19 @@ impl Scene {
 
         let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
 
-        let objects = Scene::add_objects();
-        Scene { camera, lights, shader, objects }
+        let meshes = Scene::add_meshes();
+        let snow = Snow::new();
+        Scene { camera, lights, shader, meshes, snow }
     }
 
-    fn add_objects() -> Vec<Box<dyn Drawable>> {
-        let mut objects: Vec<Box<dyn Drawable>> = Vec::new();
+    fn add_meshes() -> Vec<Mesh> {
+        let mut objects: Vec<Mesh> = Vec::new();
         let ground = ground::gen_objects();
-        objects.push(Box::new(Mesh::new(ground.0, ground.1, ground.2)));
+        objects.push(Mesh::new(ground.0, ground.1, ground.2));
         let tree = tree::gen_objects();
-        objects.push(Box::new(Mesh::new(tree.0, tree.1, tree.2)));
+        objects.push(Mesh::new(tree.0, tree.1, tree.2));
         let baubles = baubles::gen_objects();
-        objects.push(Box::new(Mesh::new(baubles.0, baubles.1, baubles.2)));
-        objects.push(Box::new(Snow::new()));
+        objects.push(Mesh::new(baubles.0, baubles.1, baubles.2));
         objects
     }
 
@@ -45,9 +46,10 @@ impl Scene {
         unsafe {
             gl::ClearColor(0., 0., 0., 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            for d in &mut self.objects {
+            for d in &mut self.meshes {
                 d.draw(&self.shader);
             }
+            self.snow.draw(&self.shader);
         }
     }
 }
