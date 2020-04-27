@@ -35,6 +35,7 @@ const SCR_HEIGHT: u32 = 1080;
 struct Scene {
     camera_position: SphericalPoint3<f32>,
     camera: Camera,
+    lights: Lights,
     obj: Box<dyn Drawable>,
 }
 
@@ -42,8 +43,12 @@ impl Scene {
     fn new(window: &Window) -> Self {
         let camera_position = SphericalPoint3::from(Point3::new(15., 12., 12.));
         let camera = Camera::new(camera_position.into(), Point3::new(0., 0., 0.), &window);
+        let mut lights = Lights::setup();
+        lights.add(Point3::new(10., 100., 10.), vec3(0.3, 0.3, 0.3), vec3(0.2, 0.2, 0.2), vec3(0., 0., 0.));
+        lights.add(Point3::new(5., 6., 2.), vec3(0.2, 0.2, 0.2), vec3(2., 2., 2.), vec3(0.5, 0.5, 0.5));
+
         let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
-        Scene { camera_position, camera, obj }
+        Scene { camera_position, camera, lights, obj }
     }
 }
 
@@ -63,10 +68,6 @@ fn main() {
         gl::CullFace(gl::BACK);
         gl::FrontFace(gl::CW);
     }
-
-    let mut lights = Lights::setup();
-    lights.add(Point3::new(10., 100., 10.), vec3(0.3, 0.3, 0.3), vec3(0.2, 0.2, 0.2), vec3(0., 0., 0.));
-    lights.add(Point3::new(5., 6., 2.), vec3(0.2, 0.2, 0.2), vec3(2., 2., 2.), vec3(0.5, 0.5, 0.5));
 
     let mut scene = Scene::new(&window);
     let mut fps_calculator = FpsCalculator::new();
