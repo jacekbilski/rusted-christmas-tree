@@ -7,6 +7,7 @@ use cgmath::{Deg, Matrix4, perspective, Point3, vec3, Vector4};
 use cgmath::prelude::*;
 use glfw::Window;
 
+use crate::coords::SphericalPoint3;
 use crate::shader::CAMERA_UBO_BINDING_POINT;
 
 pub struct Camera {
@@ -20,14 +21,13 @@ pub struct Camera {
 impl Camera {
     pub fn new(position: Point3<f32>, look_at: Point3<f32>, window: &Window) -> Self {
         let (window_width, window_height) = window.get_size();
-        let mut camera = Camera {position, look_at, ubo: 0, window_width: window_width as f32, window_height: window_height as f32};
-        let ubo = camera.setup_camera_ubo();
-        camera.ubo = ubo;
-        camera.set_position(position, look_at);
+        let ubo = Camera::setup_camera_ubo();
+        let mut camera = Camera {position, look_at, ubo, window_width: window_width as f32, window_height: window_height as f32};
+        camera.update_uniforms();
         camera
     }
 
-    fn setup_camera_ubo(&self) -> u32 {
+    fn setup_camera_ubo() -> u32 {
         unsafe {
             let mut camera_ubo = 0 as u32;
             gl::GenBuffers(1, &mut camera_ubo);
@@ -41,14 +41,14 @@ impl Camera {
         }
     }
 
-    pub fn set_position(&self, position: Point3<f32>, look_at: Point3<f32>) {
+    fn update_uniforms(&self) {
         let matrix_size = mem::size_of::<Matrix4<f32>>() as isize;
         let vector3_size = mem::size_of::<Vector4<f32>>() as isize;
         unsafe {
             gl::BindBuffer(gl::UNIFORM_BUFFER, self.ubo);
-            gl::BufferSubData(gl::UNIFORM_BUFFER, 0, vector3_size, position.as_ptr() as *const c_void);
+            gl::BufferSubData(gl::UNIFORM_BUFFER, 0, vector3_size, self.position.as_ptr() as *const c_void);
 
-            let view: Matrix4<f32> = Matrix4::look_at(position, look_at, vec3(0.0, 1.0, 0.0));
+            let view: Matrix4<f32> = Matrix4::look_at(self.position, self.look_at, vec3(0.0, 1.0, 0.0));
             gl::BufferSubData(gl::UNIFORM_BUFFER, vector3_size, matrix_size, view.as_ptr() as *const c_void);
             let projection = perspective(Deg(45.0), self.window_width / self.window_height, 0.1, 100.0);
             gl::BufferSubData(gl::UNIFORM_BUFFER, vector3_size + matrix_size, matrix_size, projection.as_ptr() as *const c_void);
@@ -61,6 +61,20 @@ impl Camera {
         let (window_width, window_height) = window.get_size();
         self.window_width = window_width as f32;
         self.window_height = window_height as f32;
-        self.set_position(self.position, self.look_at);
+        self.update_uniforms();
+    }
+
+    pub fn rotate_horizontally(&mut self, angle: f32) {
+        let mut sp = SphericalPoint3::from(self.position);
+        sp.phi += angle;
+        self.position = sp.into();
+        self.update_uniforms();
+    }
+
+    pub fn rotate_vertically(&mut self, angle: f32) {
+        let mut sp = SphericalPoint3::from(self.position);
+        sp.theta += angle;
+        self.position = sp.into();
+        self.update_uniforms();
     }
 }

@@ -13,7 +13,6 @@ use observer::RenderLoopObserver;
 use xmas_tree::XmasTree;
 
 use crate::camera::Camera;
-use crate::coords::SphericalPoint3;
 use crate::lights::Lights;
 
 use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
@@ -33,7 +32,6 @@ const SCR_WIDTH: u32 = 1920;
 const SCR_HEIGHT: u32 = 1080;
 
 struct Scene {
-    camera_position: SphericalPoint3<f32>,
     camera: Camera,
     lights: Lights,
     obj: Box<dyn Drawable>,
@@ -41,14 +39,13 @@ struct Scene {
 
 impl Scene {
     fn new(window: &Window) -> Self {
-        let camera_position = SphericalPoint3::from(Point3::new(15., 12., 12.));
-        let camera = Camera::new(camera_position.into(), Point3::new(0., 0., 0.), &window);
+        let camera = Camera::new(Point3::new(15., 12., 12.), Point3::new(0., 0., 0.), &window);
         let mut lights = Lights::setup();
         lights.add(Point3::new(10., 100., 10.), vec3(0.3, 0.3, 0.3), vec3(0.2, 0.2, 0.2), vec3(0., 0., 0.));
         lights.add(Point3::new(5., 6., 2.), vec3(0.2, 0.2, 0.2), vec3(2., 2., 2.), vec3(0.5, 0.5, 0.5));
 
         let obj: Box<dyn Drawable> = Box::new(XmasTree::setup());
-        Scene { camera_position, camera, lights, obj }
+        Scene { camera, lights, obj }
     }
 }
 
@@ -115,20 +112,16 @@ fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::Windo
             }
             glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => window.set_should_close(true),
             glfw::WindowEvent::Key(Key::Right, _, Action::Press, _) | glfw::WindowEvent::Key(Key::Right, _, Action::Repeat, _) => {
-                scene.camera_position.phi += angle_change;
-                scene.camera.set_position(scene.camera_position.into(), Point3::new(0., 0., 0.));
+                scene.camera.rotate_horizontally(angle_change);
             },
             glfw::WindowEvent::Key(Key::Left, _, Action::Press, _) | glfw::WindowEvent::Key(Key::Left, _, Action::Repeat, _) => {
-                scene.camera_position.phi -= angle_change;
-                scene.camera.set_position(scene.camera_position.into(), Point3::new(0., 0., 0.));
+                scene.camera.rotate_horizontally(-angle_change);
             },
             glfw::WindowEvent::Key(Key::Up, _, Action::Press, _) | glfw::WindowEvent::Key(Key::Up, _, Action::Repeat, _) => {
-                scene.camera_position.theta -= angle_change;
-                scene.camera.set_position(scene.camera_position.into(), Point3::new(0., 0., 0.));
+                scene.camera.rotate_vertically(-angle_change);
             },
             glfw::WindowEvent::Key(Key::Down, _, Action::Press, _) | glfw::WindowEvent::Key(Key::Down, _, Action::Repeat, _) => {
-                scene.camera_position.theta += angle_change;
-                scene.camera.set_position(scene.camera_position.into(), Point3::new(0., 0., 0.));
+                scene.camera.rotate_vertically(angle_change);
             },
             _ => {}
         }
