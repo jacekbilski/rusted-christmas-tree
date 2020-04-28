@@ -7,7 +7,7 @@ use std::ptr;
 use cgmath::{Matrix4, Point3, SquareMatrix, Vector3, Vector4};
 
 use crate::material::Material;
-use crate::model::Model;
+use crate::model::Instance;
 use crate::shader::Shader;
 
 use self::gl::types::*;
@@ -33,17 +33,17 @@ impl Vertex {
 pub struct Mesh {
     indices: Vec<u32>,
     material: Material,
-    max_instances: u32,
+    max_instances: usize,
     vao: VAO,
     instances_vbo: VBO,
 }
 
 impl Mesh {
-    pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, material: Material, max_instances: u32) -> Self {
+    pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, material: Material, max_instances: usize) -> Self {
         let instances_vbo = Self::create_instances_vbo(max_instances);
         let vao = Self::create_vao(&vertices, &indices, instances_vbo);
         let mesh = Self { indices, material, max_instances, vao, instances_vbo };
-        mesh.fill_instances_vbo(&vec![Matrix4::identity()]);
+        mesh.fill_instances_vbo(&vec![Instance { model: Matrix4::identity() }]);
         mesh
     }
 
@@ -116,25 +116,23 @@ impl Mesh {
         }
     }
 
-    fn fill_instances_vbo(&self, models: &Vec<Matrix4<f32>>) {
+    pub fn fill_instances_vbo(&self, instance_data: &Vec<Instance>) {
         unsafe {
             gl::BindBuffer(gl::ARRAY_BUFFER, self.instances_vbo); // ARRAY_BUFFER now "points" to my buffer
-            let matrix_size = mem::size_of::<Matrix4<f32>>();
             gl::BufferData(gl::ARRAY_BUFFER,
-                           (self.max_instances as usize * matrix_size) as GLsizeiptr,
-                           models.as_ptr() as *const c_void,
+                           (self.max_instances * Instance::size()) as GLsizeiptr,
+                           instance_data.as_ptr() as *const c_void,
                            gl::DYNAMIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
         }
     }
 
-    fn create_instances_vbo(max_instances: u32) -> VBO {
+    fn create_instances_vbo(max_instances: usize) -> VBO {
         unsafe {
             let mut instances_vbo = 0 as VBO;
             gl::GenBuffers(1, &mut instances_vbo); // create buffer for my data
             gl::BindBuffer(gl::ARRAY_BUFFER, instances_vbo); // ARRAY_BUFFER now "points" to my buffer
-            let matrix_size = mem::size_of::<Matrix4<f32>>();
             gl::BufferData(gl::ARRAY_BUFFER,
-                           (max_instances as usize * matrix_size) as GLsizeiptr,
+                           (max_instances * Instance::size()) as GLsizeiptr,
                            ptr::null(), // don't fill, only reserve space
                            gl::DYNAMIC_DRAW);
             instances_vbo
@@ -150,6 +148,19 @@ impl Mesh {
             shader.set_vector3("material.specular", self.material.specular);
             shader.set_float("material.shininess", self.material.shininess);
             gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
+            gl::BindVertexArray(0);
+        }
+    }
+
+    pub fn draw_instances(&mut self, shader: &Shader, num: usize) {
+        unsafe {
+            gl::UseProgram(shader.id);
+            gl::BindVertexArray(self.vao);
+            shader.set_vector3("material.ambient", self.material.ambient);
+            shader.set_vector3("material.diffuse", self.material.diffuse);
+            shader.set_vector3("material.specular", self.material.specular);
+            shader.set_float("material.shininess", self.material.shininess);
+            gl::DrawElementsInstanced(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), num as i32);
             gl::BindVertexArray(0);
         }
     }

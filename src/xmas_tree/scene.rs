@@ -7,7 +7,6 @@ use crate::model::Model;
 use crate::shader::Shader;
 use crate::xmas_tree::baubles::Baubles;
 use crate::xmas_tree::ground::Ground;
-use crate::xmas_tree::mesh::Mesh;
 use crate::xmas_tree::snow::Snow;
 use crate::xmas_tree::tree::Tree;
 

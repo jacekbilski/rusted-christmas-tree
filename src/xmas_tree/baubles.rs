@@ -1,9 +1,10 @@
 use core::f32::consts::PI;
+use std::iter::FromIterator;
 
-use cgmath::{Point3, vec3, Vector3};
+use cgmath::{Matrix4, Point3, vec3, Vector3};
 
 use crate::material::Material;
-use crate::model::Model;
+use crate::model::{Instance, Model};
 use crate::shader::Shader;
 use crate::xmas_tree::mesh::{Mesh, Vertex};
 
@@ -14,6 +15,7 @@ struct Bauble {
 
 pub struct Baubles {
     mesh: Mesh,
+    baubles: Vec<Bauble>,
 }
 
 impl Baubles {
@@ -27,7 +29,7 @@ impl Baubles {
         let light_blue: [f32; 3] = [0., 1., 1.];
         let violet: [f32; 3] = [1., 0., 1.];
 
-        let baubles: [Bauble; 16] = [
+        let baubles: Vec<Bauble> = vec![
             Bauble { center: Point3::new(0., 4.2, 0.), colour: red },
             Bauble { center: Point3::new(1., 3., 1.), colour: yellow },
             Bauble { center: Point3::new(1.0, 1.0, 2.0), colour: light_blue },
@@ -49,9 +51,7 @@ impl Baubles {
         let mut vertices: Vec<Vertex> = Vec::with_capacity(2 * precision.pow(2) as usize);
         let mut indices: Vec<u32> = Vec::with_capacity(3 * 4 * precision.pow(2) as usize);
 
-        for i in 0..baubles.len() {
-            Self::gen_sphere(&mut vertices, &mut indices, baubles[i].center, radius, precision);
-        }
+        Self::gen_sphere(&mut vertices, &mut indices, Point3::new(0., 0., 0.), radius, precision);
 
         let ambient: Vector3<f32> = vec3(0.1745, 0.01175, 0.01175);
         let diffuse: Vector3<f32> = vec3(0.61424, 0.04136, 0.04136);
@@ -59,14 +59,22 @@ impl Baubles {
         let shininess: f32 = 76.8;
         let material = Material { ambient, diffuse, specular, shininess };
 
-        let mesh = Mesh::new(vertices, indices, material, 1);
-        Self { mesh }
+        let mesh = Mesh::new(vertices, indices, material, baubles.len());
+
+        let instances = Vec::from_iter(
+            baubles.iter()
+                .map(|b| {
+                    let center_arr: [f32; 3] = b.center.into();
+                    Instance { model: Matrix4::from_translation(Vector3::from(center_arr)) }
+                })
+        );
+        mesh.fill_instances_vbo(&instances);
+        Self { mesh, baubles }
     }
 
     fn gen_sphere(vertices: &mut Vec<Vertex>, indices: &mut Vec<u32>, center: Point3<f32>, radius: f32, precision: u32) {
-        let vertices_offset = vertices.len();
         Self::gen_vertices(vertices, center, radius, precision);
-        Self::gen_indices(indices, precision, vertices_offset)
+        Self::gen_indices(indices, precision)
     }
 
     fn gen_vertices(vertices: &mut Vec<Vertex>, center: Point3<f32>, radius: f32, precision: u32) {
@@ -88,15 +96,15 @@ impl Baubles {
         vertices.push(Vertex { position: Point3::new(center.x, center.y - radius, center.z), normal: vec3(0., -1., 0.) });
     }
 
-    fn gen_indices(indices: &mut Vec<u32>, precision: u32, vertices_offset: usize) {
+    fn gen_indices(indices: &mut Vec<u32>, precision: u32) {
         let find_index = |layer: u32, slice: u32| {
             // layers 0 and precision have only 1 vertex
             if layer == 0 {
-                vertices_offset as u32
+                0
             } else if layer == precision {
-                vertices_offset as u32 + (layer - 1) * 2 * precision + 1
+                (layer - 1) * 2 * precision + 1
             } else {
-                vertices_offset as u32 + (layer - 1) * 2 * precision + 1 + slice % (2 * precision)
+                (layer - 1) * 2 * precision + 1 + slice % (2 * precision)
             }
         };
 
@@ -129,6 +137,6 @@ impl Model for Baubles {
     }
 
     fn draw(&mut self, shader: &Shader) {
-        self.mesh.draw_single(shader);
+        self.mesh.draw_instances(shader, self.baubles.len());
     }
 }
