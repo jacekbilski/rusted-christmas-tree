@@ -227,11 +227,8 @@ impl Snow {
             instances_vbo
         }
     }
-}
 
-impl Drawable for Snow {
-    fn draw(&mut self, _shader: &Shader) {
-        self.move_snowflakes();
+    fn gen_instances_models(&mut self) -> Vec<Matrix4<f32>> {
         let mut buffer: Vec<Matrix4<f32>> = Vec::with_capacity(MAX_SNOWFLAKES as usize);
         for i in 0..MAX_SNOWFLAKES as usize {
             let instance = &self.instances[i];
@@ -240,7 +237,19 @@ impl Drawable for Snow {
             let model = translation * rotation;
             buffer.push(model);
         }
+        buffer
+    }
+}
+
+impl Drawable for Snow {
+    fn tick(&mut self) {
+        self.move_snowflakes();
+        let buffer = self.gen_instances_models();
         self.fill_instances_vbo(&buffer);
+    }
+
+    fn draw(&mut self, _shader: &Shader) {
+        self.tick();
         unsafe {
             gl::UseProgram(self.shader.id);
             gl::BindVertexArray(self.vao);

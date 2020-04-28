@@ -144,7 +144,12 @@ impl Mesh {
 }
 
 impl Drawable for Mesh {
+    fn tick(&mut self) {
+        // nothing changes between frames
+    }
+
     fn draw(&mut self, shader: &Shader) {
+        self.tick();
         unsafe {
             gl::UseProgram(shader.id);
             gl::BindVertexArray(self.vao);
