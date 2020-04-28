@@ -5,7 +5,6 @@ use std::os::raw::c_void;
 use std::ptr;
 
 use cgmath::{Matrix4, Point3, SquareMatrix, Vector3, Vector4};
-use cgmath::prelude::*;
 
 use crate::drawable::Drawable;
 use crate::material::Material;

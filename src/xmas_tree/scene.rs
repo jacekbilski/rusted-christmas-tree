@@ -5,15 +5,17 @@ use crate::camera::Camera;
 use crate::drawable::Drawable;
 use crate::lights::Lights;
 use crate::shader::Shader;
-use crate::xmas_tree::{baubles, ground, tree};
+use crate::xmas_tree::baubles::Baubles;
+use crate::xmas_tree::ground::Ground;
 use crate::xmas_tree::mesh::Mesh;
 use crate::xmas_tree::snow::Snow;
+use crate::xmas_tree::tree::Tree;
 
 pub struct Scene {
     pub camera: Camera,
     lights: Lights,
     shader: Shader,
-    meshes: Vec<Mesh>,
+    drawables: Vec<Box<dyn Drawable>>,
     snow: Snow,
 }
 
@@ -28,17 +30,14 @@ impl Scene {
 
         let meshes = Scene::add_meshes();
         let snow = Snow::new();
-        Scene { camera, lights, shader, meshes, snow }
+        Scene { camera, lights, shader, drawables: meshes, snow }
     }
 
-    fn add_meshes() -> Vec<Mesh> {
-        let mut objects: Vec<Mesh> = Vec::new();
-        let ground = ground::gen_objects();
-        objects.push(Mesh::new(ground.0, ground.1, ground.2, 1));
-        let tree = tree::gen_objects();
-        objects.push(Mesh::new(tree.0, tree.1, tree.2, 1));
-        let baubles = baubles::gen_objects();
-        objects.push(Mesh::new(baubles.0, baubles.1, baubles.2, 1));
+    fn add_meshes() -> Vec<Box<dyn Drawable>> {
+        let mut objects: Vec<Box<dyn Drawable>> = Vec::new();
+        objects.push(Box::new(Ground::new()));
+        objects.push(Box::new(Tree::new()));
+        objects.push(Box::new(Baubles::new()));
         objects
     }
 
@@ -46,7 +45,7 @@ impl Scene {
         unsafe {
             gl::ClearColor(0., 0., 0., 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
-            for d in &mut self.meshes {
+            for d in &mut self.drawables {
                 d.draw(&self.shader);
             }
             self.snow.draw(&self.shader);
