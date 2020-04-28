@@ -2,8 +2,8 @@ use core::f32::consts::PI;
 
 use cgmath::{Point3, vec3, Vector3};
 
-use crate::drawable::Drawable;
 use crate::material::Material;
+use crate::model::Model;
 use crate::shader::Shader;
 use crate::xmas_tree::mesh::{Mesh, Vertex};
 
@@ -123,12 +123,12 @@ impl Baubles {
     }
 }
 
-impl Drawable for Baubles {
-    fn tick(&mut self) {
+impl Model for Baubles {
+    fn next_frame(&mut self) {
         // nothing changes
     }
 
     fn draw(&mut self, shader: &Shader) {
-        self.mesh.draw(shader);
+        self.mesh.draw_single(shader);
     }
 }

@@ -11,8 +11,8 @@ use rand::{Rng, SeedableRng};
 use rand::distributions::Uniform;
 use rand::rngs::SmallRng;
 
-use crate::drawable::Drawable;
 use crate::material::Material;
+use crate::model::Model;
 use crate::shader::Shader;
 use crate::xmas_tree::mesh::Vertex;
 
@@ -238,15 +238,15 @@ impl Snow {
     }
 }
 
-impl Drawable for Snow {
-    fn tick(&mut self) {
+impl Model for Snow {
+    fn next_frame(&mut self) {
         self.move_snowflakes();
         let buffer = self.gen_instances_models();
         self.fill_instances_vbo(&buffer);
     }
 
     fn draw(&mut self, shader: &Shader) {
-        self.tick();
+        self.next_frame();
         unsafe {
             gl::UseProgram(shader.id);
             gl::BindVertexArray(self.vao);

@@ -12,7 +12,7 @@ use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
 
 mod camera;
 mod coords;
-mod drawable;
+mod model;
 mod fps_calculator;
 mod lights;
 mod material;

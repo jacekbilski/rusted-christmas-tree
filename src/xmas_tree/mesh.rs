@@ -6,8 +6,8 @@ use std::ptr;
 
 use cgmath::{Matrix4, Point3, SquareMatrix, Vector3, Vector4};
 
-use crate::drawable::Drawable;
 use crate::material::Material;
+use crate::model::Model;
 use crate::shader::Shader;
 
 use self::gl::types::*;
@@ -140,15 +140,8 @@ impl Mesh {
             instances_vbo
         }
     }
-}
 
-impl Drawable for Mesh {
-    fn tick(&mut self) {
-        // nothing changes between frames
-    }
-
-    fn draw(&mut self, shader: &Shader) {
-        self.tick();
+    pub fn draw_single(&self, shader: &Shader) {
         unsafe {
             gl::UseProgram(shader.id);
             gl::BindVertexArray(self.vao);
