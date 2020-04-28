@@ -34,11 +34,11 @@ impl Scene {
     fn add_meshes() -> Vec<Mesh> {
         let mut objects: Vec<Mesh> = Vec::new();
         let ground = ground::gen_objects();
-        objects.push(Mesh::new(ground.0, ground.1, ground.2));
+        objects.push(Mesh::new(ground.0, ground.1, ground.2, 1));
         let tree = tree::gen_objects();
-        objects.push(Mesh::new(tree.0, tree.1, tree.2));
+        objects.push(Mesh::new(tree.0, tree.1, tree.2, 1));
         let baubles = baubles::gen_objects();
-        objects.push(Mesh::new(baubles.0, baubles.1, baubles.2));
+        objects.push(Mesh::new(baubles.0, baubles.1, baubles.2, 1));
         objects
     }
 

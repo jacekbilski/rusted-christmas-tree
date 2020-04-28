@@ -32,7 +32,7 @@ const SNOW_Z_MAX: f32 = 10.;
 const SNOWFLAKE_FALL_VELOCITY: f32 = 0.01;
 const SNOWFLAKE_MAX_RANDOM_OFFSET: f32 = 0.01;
 const SNOWFLAKE_MAX_RANDOM_ROTATION: f32 = PI / 180. * 10.;
-const MAX_FLAKES: u32 = 5_000;
+const MAX_SNOWFLAKES: u32 = 5_000;
 
 struct Instance {
     position: Vector3<f32>,
@@ -53,7 +53,7 @@ impl Snow {
         let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
         let (vertices, indices) = Snow::gen_objects();
         let instances = Snow::gen_instances();
-        let instances_vbo = Self::create_instances_vbo();
+        let instances_vbo = Self::create_instances_vbo(MAX_SNOWFLAKES);
 
         let ambient: Vector3<f32> = vec3(1., 1., 1.);
         let diffuse: Vector3<f32> = vec3(0.623960, 0.686685, 0.693872);
@@ -161,13 +161,13 @@ impl Snow {
     }
 
     fn gen_instances() -> Vec<Instance> {
-        let mut instances: Vec<Instance> = Vec::with_capacity(MAX_FLAKES as usize);
+        let mut instances: Vec<Instance> = Vec::with_capacity(MAX_SNOWFLAKES as usize);
         let x_range = Uniform::new(SNOW_X_MIN, SNOW_X_MAX);
         let y_range = Uniform::new(SNOW_Y_MIN, SNOW_Y_MAX);
         let z_range = Uniform::new(SNOW_Z_MIN, SNOW_Z_MAX);
         let angle_range = Uniform::new(0., 2. * PI);
         let mut rng = SmallRng::from_entropy();
-        for _i in 0..MAX_FLAKES {
+        for _i in 0..MAX_SNOWFLAKES {
             let x_position = rng.sample(x_range);
             let y_position = rng.sample(y_range);
             let z_position = rng.sample(z_range);
@@ -185,7 +185,7 @@ impl Snow {
         let mut rng = SmallRng::from_entropy();
         let pos_offset_range = Uniform::new(-SNOWFLAKE_MAX_RANDOM_OFFSET as f32, SNOWFLAKE_MAX_RANDOM_OFFSET);
         let rot_angle_range = Uniform::new(-SNOWFLAKE_MAX_RANDOM_ROTATION, SNOWFLAKE_MAX_RANDOM_ROTATION);
-        for i in 0..MAX_FLAKES as usize {
+        for i in 0..MAX_SNOWFLAKES as usize {
             let mut instance = &mut self.instances[i];
             let new_x_pos = instance.position.x + rng.sample(pos_offset_range);
             let mut new_y_pos = instance.position.y + rng.sample(pos_offset_range) - SNOWFLAKE_FALL_VELOCITY;
@@ -203,8 +203,8 @@ impl Snow {
     }
 
     fn fill_instances_vbo(&self) {
-        let mut buffer: Vec<Matrix4<f32>> = Vec::with_capacity(MAX_FLAKES as usize);
-        for i in 0..MAX_FLAKES as usize {
+        let mut buffer: Vec<Matrix4<f32>> = Vec::with_capacity(MAX_SNOWFLAKES as usize);
+        for i in 0..MAX_SNOWFLAKES as usize {
             let instance = &self.instances[i];
             let rotation = Matrix4::from(Euler { x: instance.rotation.x, y: instance.rotation.y, z: instance.rotation.z });
             let translation = Matrix4::from_translation(instance.position);
@@ -216,20 +216,20 @@ impl Snow {
             gl::BindBuffer(gl::ARRAY_BUFFER, self.instances_vbo); // ARRAY_BUFFER now "points" to my buffer
             let matrix_size = mem::size_of::<Matrix4<f32>>();
             gl::BufferData(gl::ARRAY_BUFFER,
-                           (MAX_FLAKES as usize * matrix_size) as GLsizeiptr,
+                           (MAX_SNOWFLAKES as usize * matrix_size) as GLsizeiptr,
                            buffer.as_ptr() as *const c_void,
                            gl::DYNAMIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
         }
     }
 
-    fn create_instances_vbo() -> VBO {
+    fn create_instances_vbo(max_instances: u32) -> VBO {
         unsafe {
             let mut instances_vbo = 0 as VBO;
             gl::GenBuffers(1, &mut instances_vbo); // create buffer for my data
             gl::BindBuffer(gl::ARRAY_BUFFER, instances_vbo); // ARRAY_BUFFER now "points" to my buffer
             let matrix_size = mem::size_of::<Matrix4<f32>>();
             gl::BufferData(gl::ARRAY_BUFFER,
-                           (MAX_FLAKES as usize * matrix_size) as GLsizeiptr,
+                           (max_instances as usize * matrix_size) as GLsizeiptr,
                            ptr::null(), // don't fill, only reserve space
                            gl::DYNAMIC_DRAW);
             instances_vbo
@@ -248,7 +248,7 @@ impl Drawable for Snow {
             self.shader.set_vector3("material.diffuse", self.material.diffuse);
             self.shader.set_vector3("material.specular", self.material.specular);
             self.shader.set_float("material.shininess", self.material.shininess);
-            gl::DrawElementsInstanced(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), MAX_FLAKES as i32);
+            gl::DrawElementsInstanced(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), MAX_SNOWFLAKES as i32);
             gl::BindVertexArray(0);
         }
     }
