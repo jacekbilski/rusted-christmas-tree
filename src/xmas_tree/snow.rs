@@ -41,6 +41,7 @@ struct Instance {
 
 pub struct Snow {
     shader: Shader,
+    max_instances: u32,
     vao: VAO,
     instances_vbo: VBO,
     indices: Vec<u32>,
@@ -62,7 +63,7 @@ impl Snow {
         let material = Material { ambient, diffuse, specular, shininess };
 
         let vao = Self::create_vao(&vertices, &indices, instances_vbo);
-        Self { shader, vao, instances_vbo, indices, instances, material }
+        Self { shader, max_instances: MAX_SNOWFLAKES, vao, instances_vbo, indices, instances, material }
     }
 
     fn gen_objects() -> (Vec<Vertex>, Vec<u32>) {
@@ -202,22 +203,13 @@ impl Snow {
         }
     }
 
-    fn fill_instances_vbo(&self) {
-        let mut buffer: Vec<Matrix4<f32>> = Vec::with_capacity(MAX_SNOWFLAKES as usize);
-        for i in 0..MAX_SNOWFLAKES as usize {
-            let instance = &self.instances[i];
-            let rotation = Matrix4::from(Euler { x: instance.rotation.x, y: instance.rotation.y, z: instance.rotation.z });
-            let translation = Matrix4::from_translation(instance.position);
-            let model = translation * rotation;
-            buffer.push(model);
-        }
-
+    fn fill_instances_vbo(&self, models: &Vec<Matrix4<f32>>) {
         unsafe {
             gl::BindBuffer(gl::ARRAY_BUFFER, self.instances_vbo); // ARRAY_BUFFER now "points" to my buffer
             let matrix_size = mem::size_of::<Matrix4<f32>>();
             gl::BufferData(gl::ARRAY_BUFFER,
-                           (MAX_SNOWFLAKES as usize * matrix_size) as GLsizeiptr,
-                           buffer.as_ptr() as *const c_void,
+                           (self.max_instances as usize * matrix_size) as GLsizeiptr,
+                           models.as_ptr() as *const c_void,
                            gl::DYNAMIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
         }
     }
@@ -240,7 +232,15 @@ impl Snow {
 impl Drawable for Snow {
     fn draw(&mut self, _shader: &Shader) {
         self.move_snowflakes();
-        self.fill_instances_vbo();
+        let mut buffer: Vec<Matrix4<f32>> = Vec::with_capacity(MAX_SNOWFLAKES as usize);
+        for i in 0..MAX_SNOWFLAKES as usize {
+            let instance = &self.instances[i];
+            let rotation = Matrix4::from(Euler { x: instance.rotation.x, y: instance.rotation.y, z: instance.rotation.z });
+            let translation = Matrix4::from_translation(instance.position);
+            let model = translation * rotation;
+            buffer.push(model);
+        }
+        self.fill_instances_vbo(&buffer);
         unsafe {
             gl::UseProgram(self.shader.id);
             gl::BindVertexArray(self.vao);

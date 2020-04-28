@@ -34,6 +34,7 @@ impl Vertex {
 pub struct Mesh {
     indices: Vec<u32>,
     material: Material,
+    max_instances: u32,
     vao: VAO,
     instances_vbo: VBO,
 }
@@ -42,8 +43,8 @@ impl Mesh {
     pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, material: Material, max_instances: u32) -> Self {
         let instances_vbo = Self::create_instances_vbo(max_instances);
         let vao = Self::create_vao(&vertices, &indices, instances_vbo);
-        let mesh = Self { indices, material, vao, instances_vbo };
-        mesh.fill_instances_vbo();
+        let mesh = Self { indices, material, max_instances, vao, instances_vbo };
+        mesh.fill_instances_vbo(&vec![Matrix4::identity()]);
         mesh
     }
 
@@ -116,14 +117,13 @@ impl Mesh {
         }
     }
 
-    fn fill_instances_vbo(&self) {
+    fn fill_instances_vbo(&self, models: &Vec<Matrix4<f32>>) {
         unsafe {
             gl::BindBuffer(gl::ARRAY_BUFFER, self.instances_vbo); // ARRAY_BUFFER now "points" to my buffer
             let matrix_size = mem::size_of::<Matrix4<f32>>();
-            let identity: Matrix4<f32> = Matrix4::identity();
             gl::BufferData(gl::ARRAY_BUFFER,
-                           (1 as usize * matrix_size) as GLsizeiptr,
-                           identity.as_ptr() as *const c_void,
+                           (self.max_instances as usize * matrix_size) as GLsizeiptr,
+                           models.as_ptr() as *const c_void,
                            gl::DYNAMIC_DRAW); // actually fill ARRAY_BUFFER (my buffer) with data
         }
     }
