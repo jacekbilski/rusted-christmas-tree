@@ -32,7 +32,6 @@ impl Vertex {
 }
 
 pub struct Mesh {
-    vertices: Vec<Vertex>,
     indices: Vec<u32>,
     material: Material,
     vao: VAO,
@@ -42,21 +41,18 @@ pub struct Mesh {
 impl Mesh {
     pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, material: Material) -> Self {
         let instances_vbo = Self::create_instances_vbo();
-
-        let mut mesh = Self { vertices, indices, material, vao: 0, instances_vbo };
-        let vao = mesh.create_vao();
-        mesh.vao = vao;
-        mesh
+        let vao = Self::create_vao(&vertices, &indices, instances_vbo);
+        Self { indices, material, vao, instances_vbo }
     }
 
-    fn create_vao(&self) -> VAO {
+    fn create_vao(vertices: &Vec<Vertex>, indices: &Vec<u32>, instances_vbo: u32) -> VAO {
         unsafe {
             let mut vao = 0 as VAO;
             gl::GenVertexArrays(1, &mut vao); // create VAO
             gl::BindVertexArray(vao); // ...and bind it
 
-            Self::create_vbo(&self.vertices);
-            Self::create_ebo(&self.indices);
+            Self::create_vbo(vertices);
+            Self::create_ebo(indices);
 
             let stride = Vertex::size() as GLsizei;
             // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
@@ -70,7 +66,7 @@ impl Mesh {
 
             // enter instancing, using completely different VBO
             // model matrix with rotation and translation
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.instances_vbo);
+            gl::BindBuffer(gl::ARRAY_BUFFER, instances_vbo);
             let mat4_size = mem::size_of::<Matrix4<f32>>() as i32;
             let vec4_size = mem::size_of::<Vector4<f32>>() as i32;
             // I need to do the calls below 4 times, because size can be at most 4, but I'm sending a matrix of size 16

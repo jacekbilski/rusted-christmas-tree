@@ -61,9 +61,8 @@ impl Snow {
         let shininess: f32 = 225.;
         let material = Material { ambient, diffuse, specular, shininess };
 
-        let mut snow = Self { shader, vao: 0, instances_vbo, indices, instances, material };
-        snow.vao = snow.create_vao(&vertices);
-        snow
+        let vao = Self::create_vao(&vertices, &indices, instances_vbo);
+        Self { shader, vao, instances_vbo, indices, instances, material }
     }
 
     fn gen_objects() -> (Vec<Vertex>, Vec<u32>) {
@@ -92,14 +91,14 @@ impl Snow {
         (vertices, indices)
     }
 
-    fn create_vao(&self, vertices: &Vec<Vertex>) -> VAO {
+    fn create_vao(vertices: &Vec<Vertex>, indices: &Vec<u32>, instances_vbo: u32) -> VAO {
         unsafe {
             let mut vao = 0 as VAO;
             gl::GenVertexArrays(1, &mut vao); // create VAO
             gl::BindVertexArray(vao); // ...and bind it
 
             Self::create_vbo(vertices);
-            Self::create_ebo(&self.indices);
+            Self::create_ebo(indices);
 
             let stride = Vertex::size() as GLsizei;
             // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
@@ -113,7 +112,7 @@ impl Snow {
 
             // enter instancing, using completely different VBO
             // model matrix with rotation and translation
-            gl::BindBuffer(gl::ARRAY_BUFFER, self.instances_vbo);
+            gl::BindBuffer(gl::ARRAY_BUFFER, instances_vbo);
             let mat4_size = mem::size_of::<Matrix4<f32>>() as i32;
             let vec4_size = mem::size_of::<Vector4<f32>>() as i32;
             // I need to do the calls below 4 times, because size can be at most 4, but I'm sending a matrix of size 16
