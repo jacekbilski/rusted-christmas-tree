@@ -47,6 +47,7 @@ fn main() {
     // render loop
     while !window.should_close() {
         process_events(&mut window, &events, &mut scene);
+        scene.next_frame();
         scene.draw();
         window.swap_buffers();
         glfw.poll_events();

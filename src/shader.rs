@@ -6,7 +6,7 @@ use std::io::Read;
 use std::ptr;
 use std::str;
 
-use cgmath::{Matrix, Matrix4, Vector3};
+use cgmath::Vector3;
 
 use self::gl::types::*;
 
@@ -92,14 +92,6 @@ impl Shader {
             let c_name = CString::new(name).unwrap();
             let location = gl::GetUniformLocation(self.id, c_name.as_ptr());
             gl::Uniform1f(location, f);
-        }
-    }
-
-    pub fn set_matrix4(&self, name: &str, mat: &Matrix4<f32>) {
-        unsafe {
-            let c_name = CString::new(name).unwrap();
-            let location = gl::GetUniformLocation(self.id, c_name.as_ptr());
-            gl::UniformMatrix4fv(location, 1, gl::FALSE, mat.as_ptr());
         }
     }
 }

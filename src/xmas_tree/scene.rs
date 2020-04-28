@@ -15,7 +15,6 @@ pub struct Scene {
     lights: Lights,
     shader: Shader,
     models: Vec<Box<dyn Model>>,
-    snow: Snow,
 }
 
 impl Scene {
@@ -28,8 +27,7 @@ impl Scene {
         let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
 
         let models = Scene::add_models();
-        let snow = Snow::new();
-        Scene { camera, lights, shader, models, snow }
+        Scene { camera, lights, shader, models }
     }
 
     fn add_models() -> Vec<Box<dyn Model>> {
@@ -37,7 +35,14 @@ impl Scene {
         models.push(Box::new(Ground::new()));
         models.push(Box::new(Tree::new()));
         models.push(Box::new(Baubles::new()));
+        models.push(Box::new(Snow::new()));
         models
+    }
+
+    pub fn next_frame(&mut self) {
+        for d in &mut self.models {
+            d.next_frame();
+        }
     }
 
     pub fn draw(&mut self) {
@@ -47,7 +52,6 @@ impl Scene {
             for d in &mut self.models {
                 d.draw(&self.shader);
             }
-            self.snow.draw(&self.shader);
         }
     }
 }

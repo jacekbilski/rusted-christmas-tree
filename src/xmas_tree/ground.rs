@@ -1,7 +1,7 @@
-use cgmath::{Point3, vec3, Vector3};
+use cgmath::{Matrix4, Point3, SquareMatrix, vec3, Vector3};
 
 use crate::material::Material;
-use crate::model::Model;
+use crate::model::{Instance, Model};
 use crate::shader::Shader;
 use crate::xmas_tree::mesh::{Mesh, Vertex};
 
@@ -30,7 +30,7 @@ impl Ground {
         let material = Material { ambient, diffuse, specular, shininess };
 
         let mesh = Mesh::new(vertices, indices, material, 1);
-
+        mesh.fill_instances_vbo(&vec![Instance { model: Matrix4::identity() }]);
         Self { mesh }
     }
 }
