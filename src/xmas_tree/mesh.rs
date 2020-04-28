@@ -4,7 +4,8 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
-use cgmath::{Point3, Vector3};
+use cgmath::{Matrix4, Point3, SquareMatrix, Vector3, Vector4};
+use cgmath::prelude::*;
 
 use crate::drawable::Drawable;
 use crate::material::Material;
@@ -31,29 +32,31 @@ impl Vertex {
 }
 
 pub struct Mesh {
-    vao: VAO,
+    vertices: Vec<Vertex>,
     indices: Vec<u32>,
     material: Material,
+    vao: VAO,
+    instances_vbo: VBO,
 }
 
 impl Mesh {
     pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, material: Material) -> Self {
-        let within_vao = || {
-            Self::create_vbo(&vertices);
-            Self::create_ebo(&indices);
-        };
-        let vao = Self::create_vao(within_vao);
+        let instances_vbo = Self::create_instances_vbo();
 
-        Self { vao, indices, material }
+        let mut mesh = Self { vertices, indices, material, vao: 0, instances_vbo };
+        let vao = mesh.create_vao();
+        mesh.vao = vao;
+        mesh
     }
 
-    fn create_vao(within_vao_context: impl Fn() -> ()) -> VAO {
+    fn create_vao(&self) -> VAO {
         unsafe {
             let mut vao = 0 as VAO;
             gl::GenVertexArrays(1, &mut vao); // create VAO
             gl::BindVertexArray(vao); // ...and bind it
 
-            within_vao_context();
+            Self::create_vbo(&self.vertices);
+            Self::create_ebo(&self.indices);
 
             let stride = Vertex::size() as GLsizei;
             // tell GL how to interpret the data in VBO -> one triangle vertex takes 3 coordinates (x, y, z)
@@ -64,6 +67,25 @@ impl Mesh {
             // second three floats are for normal vector
             gl::VertexAttribPointer(1, 3, gl::FLOAT, gl::FALSE, stride, (3 * mem::size_of::<GLfloat>()) as *const c_void);
             gl::EnableVertexAttribArray(1); // enable the attribute for colour
+
+            // enter instancing, using completely different VBO
+            // model matrix with rotation and translation
+            gl::BindBuffer(gl::ARRAY_BUFFER, self.instances_vbo);
+            let mat4_size = mem::size_of::<Matrix4<f32>>() as i32;
+            let vec4_size = mem::size_of::<Vector4<f32>>() as i32;
+            // I need to do the calls below 4 times, because size can be at most 4, but I'm sending a matrix of size 16
+            gl::VertexAttribPointer(2, 4, gl::FLOAT, gl::FALSE, mat4_size, ptr::null());
+            gl::VertexAttribPointer(3, 4, gl::FLOAT, gl::FALSE, mat4_size, vec4_size as *const c_void);
+            gl::VertexAttribPointer(4, 4, gl::FLOAT, gl::FALSE, mat4_size, (2 * vec4_size) as *const c_void);
+            gl::VertexAttribPointer(5, 4, gl::FLOAT, gl::FALSE, mat4_size, (3 * vec4_size) as *const c_void);
+            gl::EnableVertexAttribArray(2);
+            gl::EnableVertexAttribArray(3);
+            gl::EnableVertexAttribArray(4);
+            gl::EnableVertexAttribArray(5);
+            gl::VertexAttribDivisor(2, 1);    // every iteration
+            gl::VertexAttribDivisor(3, 1);    // every iteration
+            gl::VertexAttribDivisor(4, 1);    // every iteration
+            gl::VertexAttribDivisor(5, 1);    // every iteration
 
             gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind my VBO
             // do NOT unbind EBO, VAO would remember that
@@ -95,6 +117,21 @@ impl Mesh {
                            gl::STATIC_DRAW); // actually fill ELEMENT_ARRAY_BUFFER with data
         }
     }
+
+    fn create_instances_vbo() -> VBO {
+        unsafe {
+            let mut instances_vbo = 0 as VBO;
+            gl::GenBuffers(1, &mut instances_vbo); // create buffer for my data
+            gl::BindBuffer(gl::ARRAY_BUFFER, instances_vbo); // ARRAY_BUFFER now "points" to my buffer
+            let matrix_size = mem::size_of::<Matrix4<f32>>();
+            let identity: Matrix4<f32> = Matrix4::identity();
+            gl::BufferData(gl::ARRAY_BUFFER,
+                           (matrix_size) as GLsizeiptr,
+                           identity.as_ptr() as *const c_void,
+                           gl::DYNAMIC_DRAW);
+            instances_vbo
+        }
+    }
 }
 
 impl Drawable for Mesh {
@@ -106,6 +143,7 @@ impl Drawable for Mesh {
             shader.set_vector3("material.diffuse", self.material.diffuse);
             shader.set_vector3("material.specular", self.material.specular);
             shader.set_float("material.shininess", self.material.shininess);
+            shader.set_matrix4("instanceModel", &Matrix4::identity());
             gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
             gl::BindVertexArray(0);
         }

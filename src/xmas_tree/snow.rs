@@ -50,7 +50,7 @@ pub struct Snow {
 
 impl Snow {
     pub fn new() -> Self {
-        let shader = Shader::new("src/xmas_tree/shaders/snow.vert", "src/xmas_tree/shaders/static.frag");
+        let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
         let (vertices, indices) = Snow::gen_objects();
         let instances = Snow::gen_instances();
         let instances_vbo = Self::create_instances_vbo();
@@ -69,7 +69,6 @@ impl Snow {
     fn gen_objects() -> (Vec<Vertex>, Vec<u32>) {
         let radius: f32 = 0.05;
         let normal: Vector3<f32> = vec3(1., 0., 0.);
-        let neg_normal: Vector3<f32> = vec3(-1., 0., 0.);
         let mut vertices: Vec<Vertex> = vec![];
 
         let angle_diff = PI / 3 as f32;
