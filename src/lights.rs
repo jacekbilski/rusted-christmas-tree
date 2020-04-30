@@ -10,7 +10,7 @@ use crate::shader::LIGHTS_UBO_BINDING_POINT;
 
 use self::gl::types::*;
 
-const MAX_LIGHTS: u8 = 4;
+const MAX_LIGHTS: isize = 4;
 
 struct Light {
     position: Point3<f32>,
@@ -31,14 +31,14 @@ impl Lights {
 
     fn setup_lights_ubo() -> u32 {
         unsafe {
-            let mut light_ubo = 0 as u32;
-            gl::GenBuffers(1, &mut light_ubo);
-            gl::BindBuffer(gl::UNIFORM_BUFFER, light_ubo);
+            let mut lights_ubo = 0 as u32;
+            gl::GenBuffers(1, &mut lights_ubo);
+            gl::BindBuffer(gl::UNIFORM_BUFFER, lights_ubo);
             let vector3_size = mem::size_of::<Vector4<f32>>() as isize; // there's no mistake, Vector3 takes the same amount of memory as Vector4
-            gl::BufferData(gl::UNIFORM_BUFFER, 16 + MAX_LIGHTS as isize * 4 * vector3_size, ptr::null(), gl::STATIC_DRAW);
-            gl::BindBufferBase(gl::UNIFORM_BUFFER, LIGHTS_UBO_BINDING_POINT, light_ubo);
+            gl::BufferData(gl::UNIFORM_BUFFER, 16 + MAX_LIGHTS * 4 * vector3_size, ptr::null(), gl::STATIC_DRAW);
+            gl::BindBufferBase(gl::UNIFORM_BUFFER, LIGHTS_UBO_BINDING_POINT, lights_ubo);
             gl::BindBuffer(gl::UNIFORM_BUFFER, 0);
-            light_ubo
+            lights_ubo
         }
     }
 
