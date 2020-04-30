@@ -4,9 +4,8 @@ use std::mem;
 use std::os::raw::c_void;
 use std::ptr;
 
-use cgmath::{Matrix4, Point3, Vector3, Vector4};
+use cgmath::{Point3, Vector3, Vector4};
 
-use crate::material::Material;
 use crate::model::Instance;
 use crate::shader::Shader;
 
@@ -32,17 +31,16 @@ impl Vertex {
 
 pub struct Mesh {
     indices: Vec<u32>,
-    material: Material,
     max_instances: usize,
     vao: VAO,
     instances_vbo: VBO,
 }
 
 impl Mesh {
-    pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, material: Material, max_instances: usize) -> Self {
+    pub fn new(vertices: Vec<Vertex>, indices: Vec<u32>, max_instances: usize) -> Self {
         let instances_vbo = Self::create_instances_vbo(max_instances);
         let vao = Self::create_vao(&vertices, &indices, instances_vbo);
-        let mesh = Self { indices, material, max_instances, vao, instances_vbo };
+        let mesh = Self { indices, max_instances, vao, instances_vbo };
         mesh
     }
 
@@ -66,15 +64,17 @@ impl Mesh {
             gl::EnableVertexAttribArray(1); // enable the attribute for colour
 
             // enter instancing, using completely different VBO
-            // model matrix with rotation and translation
             gl::BindBuffer(gl::ARRAY_BUFFER, instances_vbo);
-            let mat4_size = mem::size_of::<Matrix4<f32>>() as i32;
             let vec4_size = mem::size_of::<Vector4<f32>>() as i32;
+            let instances_stride = Instance::size() as GLsizei;
+            // println!("Instances stride: {}, Instance.size: {}", instances_stride, Instance::size());
+
+            // model matrix with rotation and translation
             // I need to do the calls below 4 times, because size can be at most 4, but I'm sending a matrix of size 16
-            gl::VertexAttribPointer(2, 4, gl::FLOAT, gl::FALSE, mat4_size, ptr::null());
-            gl::VertexAttribPointer(3, 4, gl::FLOAT, gl::FALSE, mat4_size, vec4_size as *const c_void);
-            gl::VertexAttribPointer(4, 4, gl::FLOAT, gl::FALSE, mat4_size, (2 * vec4_size) as *const c_void);
-            gl::VertexAttribPointer(5, 4, gl::FLOAT, gl::FALSE, mat4_size, (3 * vec4_size) as *const c_void);
+            gl::VertexAttribPointer(2, 4, gl::FLOAT, gl::FALSE, instances_stride, ptr::null());
+            gl::VertexAttribPointer(3, 4, gl::FLOAT, gl::FALSE, instances_stride, vec4_size as *const c_void);
+            gl::VertexAttribPointer(4, 4, gl::FLOAT, gl::FALSE, instances_stride, (2 * vec4_size) as *const c_void);
+            gl::VertexAttribPointer(5, 4, gl::FLOAT, gl::FALSE, instances_stride, (3 * vec4_size) as *const c_void);
             gl::EnableVertexAttribArray(2);
             gl::EnableVertexAttribArray(3);
             gl::EnableVertexAttribArray(4);
@@ -84,7 +84,12 @@ impl Mesh {
             gl::VertexAttribDivisor(4, 1);    // every iteration
             gl::VertexAttribDivisor(5, 1);    // every iteration
 
-            gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind my VBO
+            // material_id
+            gl::VertexAttribPointer(6, 1, gl::FLOAT, gl::FALSE, instances_stride, (4 * vec4_size) as *const c_void);
+            gl::EnableVertexAttribArray(6);
+            gl::VertexAttribDivisor(6, 1);    // every iteration
+
+            gl::BindBuffer(gl::ARRAY_BUFFER, 0); // unbind instances VBO
             // do NOT unbind EBO, VAO would remember that
             gl::BindVertexArray(0); // unbind my VAO
             vao
@@ -116,6 +121,8 @@ impl Mesh {
     }
 
     pub fn fill_instances_vbo(&self, instances: &Vec<Instance>) {
+        // println!("Instance[0]: {:?}", instances[0]);
+        // println!("Instance: {:?}", instances);
         unsafe {
             gl::BindBuffer(gl::ARRAY_BUFFER, self.instances_vbo); // ARRAY_BUFFER now "points" to my buffer
             gl::BufferData(gl::ARRAY_BUFFER,
@@ -142,10 +149,6 @@ impl Mesh {
         unsafe {
             gl::UseProgram(shader.id);
             gl::BindVertexArray(self.vao);
-            shader.set_vector3("material.ambient", self.material.ambient);
-            shader.set_vector3("material.diffuse", self.material.diffuse);
-            shader.set_vector3("material.specular", self.material.specular);
-            shader.set_float("material.shininess", self.material.shininess);
             gl::DrawElements(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null());
             gl::BindVertexArray(0);
         }
@@ -155,10 +158,6 @@ impl Mesh {
         unsafe {
             gl::UseProgram(shader.id);
             gl::BindVertexArray(self.vao);
-            shader.set_vector3("material.ambient", self.material.ambient);
-            shader.set_vector3("material.diffuse", self.material.diffuse);
-            shader.set_vector3("material.specular", self.material.specular);
-            shader.set_float("material.shininess", self.material.shininess);
             gl::DrawElementsInstanced(gl::TRIANGLES, self.indices.len() as i32, gl::UNSIGNED_INT, ptr::null(), num as i32);
             gl::BindVertexArray(0);
         }

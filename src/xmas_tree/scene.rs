@@ -3,6 +3,7 @@ use glfw::Window;
 
 use crate::camera::Camera;
 use crate::lights::Lights;
+use crate::material::Materials;
 use crate::model::Model;
 use crate::shader::Shader;
 use crate::xmas_tree::baubles::Baubles;
@@ -23,19 +24,20 @@ impl Scene {
         let mut lights = Lights::setup();
         lights.add(Point3::new(10., 100., 10.), vec3(0.3, 0.3, 0.3), vec3(0.2, 0.2, 0.2), vec3(0., 0., 0.));
         lights.add(Point3::new(5., 6., 2.), vec3(0.2, 0.2, 0.2), vec3(2., 2., 2.), vec3(0.5, 0.5, 0.5));
+        let mut materials = Materials::setup();
 
         let shader = Shader::new("src/xmas_tree/shaders/static.vert", "src/xmas_tree/shaders/static.frag");
 
-        let models = Scene::add_models();
+        let models = Scene::add_models(&mut materials);
         Scene { camera, lights, shader, models }
     }
 
-    fn add_models() -> Vec<Box<dyn Model>> {
+    fn add_models(materials: &mut Materials) -> Vec<Box<dyn Model>> {
         let mut models: Vec<Box<dyn Model>> = Vec::new();
-        models.push(Box::new(Ground::new()));
-        models.push(Box::new(Tree::new()));
-        models.push(Box::new(Baubles::new()));
-        models.push(Box::new(Snow::new()));
+        models.push(Box::new(Ground::new(materials)));
+        models.push(Box::new(Tree::new(materials)));
+        models.push(Box::new(Baubles::new(materials)));
+        models.push(Box::new(Snow::new(materials)));
         models
     }
 

@@ -3,14 +3,14 @@ use std::iter::FromIterator;
 
 use cgmath::{Matrix4, Point3, vec3, Vector3};
 
-use crate::material::Material;
+use crate::material::{Material, MaterialId, Materials};
 use crate::model::{Instance, Model};
 use crate::shader::Shader;
 use crate::xmas_tree::mesh::{Mesh, Vertex};
 
 struct Bauble {
     center: Point3<f32>,
-    colour: [f32; 3],
+    material_id: MaterialId,
 }
 
 pub struct Baubles {
@@ -19,33 +19,62 @@ pub struct Baubles {
 }
 
 impl Baubles {
-    pub fn new() -> Self {
+    pub fn new(materials: &mut Materials) -> Self {
         let precision = 8 as u32;
         let radius = 0.2 as f32;
 
-        let red: [f32; 3] = [1., 0., 0.];
-        let yellow: [f32; 3] = [1., 1., 0.];
-        let blue: [f32; 3] = [0., 0., 1.];
-        let light_blue: [f32; 3] = [0., 1., 1.];
-        let violet: [f32; 3] = [1., 0., 1.];
+        let ambient: Vector3<f32> = vec3(0.1745, 0.01175, 0.01175);
+        let diffuse: Vector3<f32> = vec3(0.61424, 0.04136, 0.04136);
+        let specular: Vector3<f32> = vec3(0.727811, 0.626959, 0.626959);
+        let shininess: f32 = 76.8;
+        let red = Material { ambient, diffuse, specular, shininess };
+        let red_id = materials.add(red);
+
+        let ambient: Vector3<f32> = vec3(0.01175, 0.01175, 0.1745);
+        let diffuse: Vector3<f32> = vec3(0.04136, 0.04136, 0.61424);
+        let specular: Vector3<f32> = vec3(0.626959, 0.626959, 0.61424);
+        let shininess: f32 = 76.8;
+        let blue = Material { ambient, diffuse, specular, shininess };
+        let blue_id = materials.add(blue);
+
+        let ambient: Vector3<f32> = vec3(0.1745, 0.1745, 0.01175);
+        let diffuse: Vector3<f32> = vec3(0.61424, 0.61424, 0.04136);
+        let specular: Vector3<f32> = vec3(0.727811, 0.727811, 0.626959);
+        let shininess: f32 = 76.8;
+        let yellow = Material { ambient, diffuse, specular, shininess };
+        let yellow_id = materials.add(yellow);
+
+        let ambient: Vector3<f32> = vec3(0.01175, 0.1745, 0.1745);
+        let diffuse: Vector3<f32> = vec3(0.04136, 0.61424, 0.61424);
+        let specular: Vector3<f32> = vec3(0.626959, 0.727811, 0.727811);
+        let shininess: f32 = 76.8;
+        let light_blue = Material { ambient, diffuse, specular, shininess };
+        let light_blue_id = materials.add(light_blue);
+
+        let ambient: Vector3<f32> = vec3(0.1745, 0.01175, 0.1745);
+        let diffuse: Vector3<f32> = vec3(0.61424, 0.04136, 0.61424);
+        let specular: Vector3<f32> = vec3(0.727811, 0.626959, 0.727811);
+        let shininess: f32 = 76.8;
+        let violet = Material { ambient, diffuse, specular, shininess };
+        let violet_id = materials.add(violet);
 
         let baubles: Vec<Bauble> = vec![
-            Bauble { center: Point3::new(0., 4.2, 0.), colour: red },
-            Bauble { center: Point3::new(1., 3., 1.), colour: yellow },
-            Bauble { center: Point3::new(1.0, 1.0, 2.0), colour: light_blue },
-            Bauble { center: Point3::new(-1.0, 1.0, 2.0), colour: blue },
-            Bauble { center: Point3::new(1.0, 1.0, -2.0), colour: violet },
-            Bauble { center: Point3::new(2.0, 1.0, 0.0), colour: red },
-            Bauble { center: Point3::new(3.0, -1.0, 0.0), colour: blue },
-            Bauble { center: Point3::new(0.0, -1.0, 3.0), colour: yellow },
-            Bauble { center: Point3::new(-3.0, -1.0, 0.0), colour: red },
-            Bauble { center: Point3::new(0.0, -1.0, -3.0), colour: blue },
-            Bauble { center: Point3::new(2.0, -2.0, -3.0), colour: blue },
-            Bauble { center: Point3::new(2.0, -2.0, 3.0), colour: violet },
-            Bauble { center: Point3::new(3.0, -2.0, -2.0), colour: violet },
-            Bauble { center: Point3::new(-3.0, -2.0, -2.0), colour: red },
-            Bauble { center: Point3::new(0.0, -2.0, 4.0), colour: red },
-            Bauble { center: Point3::new(4.0, -2.0, 0.0), colour: yellow }
+            Bauble { center: Point3::new(0., 4.2, 0.), material_id: red_id },
+            Bauble { center: Point3::new(1., 3., 1.), material_id: yellow_id },
+            Bauble { center: Point3::new(1.0, 1.0, 2.0), material_id: light_blue_id },
+            Bauble { center: Point3::new(-1.0, 1.0, 2.0), material_id: blue_id },
+            Bauble { center: Point3::new(1.0, 1.0, -2.0), material_id: violet_id },
+            Bauble { center: Point3::new(2.0, 1.0, 0.0), material_id: red_id },
+            Bauble { center: Point3::new(3.0, -1.0, 0.0), material_id: blue_id },
+            Bauble { center: Point3::new(0.0, -1.0, 3.0), material_id: yellow_id },
+            Bauble { center: Point3::new(-3.0, -1.0, 0.0), material_id: red_id },
+            Bauble { center: Point3::new(0.0, -1.0, -3.0), material_id: blue_id },
+            Bauble { center: Point3::new(2.0, -2.0, -3.0), material_id: blue_id },
+            Bauble { center: Point3::new(2.0, -2.0, 3.0), material_id: violet_id },
+            Bauble { center: Point3::new(3.0, -2.0, -2.0), material_id: violet_id },
+            Bauble { center: Point3::new(-3.0, -2.0, -2.0), material_id: red_id },
+            Bauble { center: Point3::new(0.0, -2.0, 4.0), material_id: red_id },
+            Bauble { center: Point3::new(4.0, -2.0, 0.0), material_id: yellow_id }
         ];
 
         let mut vertices: Vec<Vertex> = Vec::with_capacity(2 * precision.pow(2) as usize);
@@ -53,19 +82,13 @@ impl Baubles {
 
         Self::gen_sphere(&mut vertices, &mut indices, Point3::new(0., 0., 0.), radius, precision);
 
-        let ambient: Vector3<f32> = vec3(0.1745, 0.01175, 0.01175);
-        let diffuse: Vector3<f32> = vec3(0.61424, 0.04136, 0.04136);
-        let specular: Vector3<f32> = vec3(0.727811, 0.626959, 0.626959);
-        let shininess: f32 = 76.8;
-        let material = Material { ambient, diffuse, specular, shininess };
-
-        let mesh = Mesh::new(vertices, indices, material, baubles.len());
+        let mesh = Mesh::new(vertices, indices, baubles.len());
 
         let instances = Vec::from_iter(
             baubles.iter()
                 .map(|b| {
                     let center_arr: [f32; 3] = b.center.into();
-                    Instance { model: Matrix4::from_translation(Vector3::from(center_arr)) }
+                    Instance { model: Matrix4::from_translation(Vector3::from(center_arr)), material_id : b.material_id }
                 })
         );
         mesh.fill_instances_vbo(&instances);

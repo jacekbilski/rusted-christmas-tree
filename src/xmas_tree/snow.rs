@@ -8,7 +8,7 @@ use rand::{Rng, SeedableRng};
 use rand::distributions::Uniform;
 use rand::rngs::SmallRng;
 
-use crate::material::Material;
+use crate::material::{Material, MaterialId, Materials};
 use crate::model::{Instance, Model};
 use crate::shader::Shader;
 use crate::xmas_tree::mesh::{Mesh, Vertex};
@@ -33,21 +33,23 @@ struct Snowflake {
 pub struct Snow {
     mesh: Mesh,
     snowflakes: Vec<Snowflake>,
+    material_id: MaterialId,
 }
 
 impl Snow {
-    pub fn new() -> Self {
+    pub fn new(materials: &mut Materials) -> Self {
         let ambient: Vector3<f32> = vec3(1., 1., 1.);
         let diffuse: Vector3<f32> = vec3(0.623960, 0.686685, 0.693872);
         let specular: Vector3<f32> = vec3(0.5, 0.5, 0.5);
         let shininess: f32 = 225.;
         let material = Material { ambient, diffuse, specular, shininess };
+        let material_id = materials.add(material);
 
         let (vertices, indices) = Snow::gen_snowflake_mesh();
-        let mesh = Mesh::new(vertices, indices, material, MAX_SNOWFLAKES);
+        let mesh = Mesh::new(vertices, indices, MAX_SNOWFLAKES);
 
         let snowflakes = Snow::gen_snowflakes();
-        let snow = Self { mesh, snowflakes };
+        let snow = Self { mesh, snowflakes, material_id };
         let instances = snow.gen_instances();
         snow.mesh.fill_instances_vbo(&instances);
         snow
@@ -128,7 +130,7 @@ impl Snow {
             let rotation = Matrix4::from(Euler { x: snowflake.rotation.x, y: snowflake.rotation.y, z: snowflake.rotation.z });
             let translation = Matrix4::from_translation(snowflake.position);
             let model = translation * rotation;
-            instances.push(Instance { model });
+            instances.push(Instance { model, material_id: self.material_id });
         }
         instances
     }

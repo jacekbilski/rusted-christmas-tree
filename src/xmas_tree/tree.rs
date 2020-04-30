@@ -2,7 +2,7 @@ use core::f32::consts::PI;
 
 use cgmath::{Matrix4, Point3, SquareMatrix, vec3, Vector3};
 
-use crate::material::Material;
+use crate::material::{Material, Materials};
 use crate::model::{Instance, Model};
 use crate::shader::Shader;
 use crate::xmas_tree::mesh::{Mesh, Vertex};
@@ -12,7 +12,7 @@ pub struct Tree {
 }
 
 impl Tree {
-    pub fn new() -> Self {
+    pub fn new(materials: &mut Materials) -> Self {
         let slices = 40 as u32;
 
         let mut vertices: Vec<Vertex> = Vec::with_capacity(3 * 2 * slices as usize);
@@ -32,9 +32,10 @@ impl Tree {
         let specular: Vector3<f32> = vec3(0.1, 0.1, 0.1);
         let shininess: f32 = 225.;
         let material = Material { ambient, diffuse, specular, shininess };
+        let material_id = materials.add(material);
 
-        let mesh = Mesh::new(vertices, indices, material, 1);
-        mesh.fill_instances_vbo(&vec![Instance { model: Matrix4::identity() }]);
+        let mesh = Mesh::new(vertices, indices, 1);
+        mesh.fill_instances_vbo(&vec![Instance { model: Matrix4::identity(), material_id }]);
         Self { mesh }
     }
 
