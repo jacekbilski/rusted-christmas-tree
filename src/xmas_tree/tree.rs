@@ -13,8 +13,8 @@ pub struct Tree {
 
 impl Tree {
     pub fn new(materials: &mut Materials) -> Self {
-        Self::manual(materials)
-        // Self::from_model(materials)
+        // Self::manual(materials)
+        Self::from_model(materials)
     }
 
     fn manual(materials: &mut Materials) -> Self {
@@ -69,15 +69,10 @@ impl Tree {
     fn from_model(materials: &mut Materials) -> Self {
         let tree = tobj::load_obj("models/tree.obj");
         let (models, model_materials) = tree.unwrap();
-        for i in 0..models.len() {
-            println!("Found model, i: {}, name: '{}'", i, models[i].name);
-        }
-        let vertices_count: usize = models.iter().map(|m| m.mesh.positions.len()).sum::<usize>() / 3;
-        let indices_count: usize = models.iter().map(|m| m.mesh.indices.len()).sum::<usize>() / 3;
-        let mut vertices: Vec<Vertex> = Vec::with_capacity(vertices_count);
-        let mut indices: Vec<u32> = Vec::with_capacity(3 * indices_count as usize);
-        // for mi in 0..models.len() {
-        let mi = 0;
+        let mut meshes: Vec<Mesh> = vec![];
+        for mi in 0..models.len() {
+            let mut vertices: Vec<Vertex> = vec![];
+            let mut indices: Vec<u32> = vec![];
             let mesh = models[mi].mesh.clone();
             for vi in (0..mesh.positions.len()).step_by(3) {
                 let position = Point3::new(mesh.positions[vi], mesh.positions[vi+1], mesh.positions[vi+2]);
@@ -86,13 +81,15 @@ impl Tree {
             }
             indices.extend(mesh.indices.iter());
 
-        // }
-        let material = Material{ambient: Vector3::from(model_materials[2].ambient), diffuse: Vector3::from(model_materials[2].diffuse), specular: Vector3::from(model_materials[2].specular), shininess: model_materials[2].shininess};
-        let material_id = materials.add(material);
+            let material = &model_materials[models[mi].mesh.material_id.unwrap()];
+            let my_material = Material{ambient: Vector3::from(material.ambient), diffuse: Vector3::from(material.diffuse), specular: Vector3::from(material.specular), shininess: material.shininess};
+            let material_id = materials.add(my_material);
+            let mesh = Mesh::new(vertices, indices, 1);
+            mesh.fill_instances_vbo(&vec![Instance { model: Matrix4::identity(), material_id }]);
+            meshes.push(mesh);
+        }
 
-        let mesh = Mesh::new(vertices, indices, 1);
-        mesh.fill_instances_vbo(&vec![Instance { model: Matrix4::identity(), material_id }]);
-        Self { meshes: vec![mesh] }
+        Self { meshes }
     }
 }
 
