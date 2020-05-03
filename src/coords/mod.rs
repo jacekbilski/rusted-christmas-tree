@@ -59,6 +59,39 @@ impl<T: Float> From<Point3<T>> for SphericalPoint3<T> {
     }
 }
 
+#[derive(PartialEq, Eq, Copy, Clone, Hash, Debug)]
+pub struct CylindricalPoint3<T> {
+    pub r: T,
+    pub phi: T,
+    pub h: T,
+}
+
+impl<T> CylindricalPoint3<T> {
+    pub fn new(r: T, phi: T, h: T) -> Self {
+        CylindricalPoint3 { r, phi, h }
+    }
+}
+
+impl<T: Float> Into<Point3<T>> for CylindricalPoint3<T> {
+    fn into(self) -> Point3<T> {
+        let x = self.r * self.phi.cos();
+        let y = self.h;
+        let z = self.r * self.phi.sin();
+        Point3::new(x, y, z)
+    }
+}
+
+impl<T: Float> From<Point3<T>> for CylindricalPoint3<T> {
+    fn from(p: Point3<T>) -> Self {
+        let zero = T::from(0.).unwrap();
+
+        let r = (p.x.powi(2) + p.z.powi(2)).sqrt();
+        let phi = p.z.atan2(p.x);
+        let h = p.y;
+        CylindricalPoint3::new(r, phi, h)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use core::f32::consts::FRAC_PI_2;
@@ -67,7 +100,7 @@ mod tests {
     use cgmath::Point3;
     use rstest::*;
 
-    use crate::coords::SphericalPoint3;
+    use crate::coords::{CylindricalPoint3, SphericalPoint3};
 
     #[rstest(sp, expected,
     case(SphericalPoint3::new(0., 0., 0.), Point3::new(0., 0., 0.)),
@@ -80,7 +113,7 @@ mod tests {
     case(SphericalPoint3::new(3., FRAC_PI_4, 0.), Point3::new(0., (4.5 as f32).sqrt(), (4.5 as f32).sqrt())),
     case(SphericalPoint3::new(5., FRAC_PI_4, FRAC_PI_4), Point3::new(2.5, (12.5 as f32).sqrt(), 2.5)),
     )]
-    fn into_point3(sp: SphericalPoint3<f32>, expected: Point3<f32>) {
+    fn spherical_point3_into_point3(sp: SphericalPoint3<f32>, expected: Point3<f32>) {
         let result: Point3<f32> = sp.into();
         let x_diff = (result.x - expected.x).abs();
         let y_diff = (result.y - expected.y).abs();
@@ -102,7 +135,7 @@ mod tests {
     case(Point3::new(0., 3., 3.), SphericalPoint3::new((18 as f32).sqrt(), FRAC_PI_4, 0.)),
     case(Point3::new(4., 4., 4.), SphericalPoint3::new((48 as f32).sqrt(), (4. / (48 as f32).sqrt()).acos(), FRAC_PI_4)),
     )]
-    fn from_point3(p: Point3<f32>, expected: SphericalPoint3<f32>) {
+    fn spherical_point3_from_point3(p: Point3<f32>, expected: SphericalPoint3<f32>) {
         let result: SphericalPoint3<f32> = SphericalPoint3::from(p);
         let r_diff = (result.r - expected.r).abs();
         let theta_diff = (result.theta - expected.theta).abs();
@@ -111,5 +144,52 @@ mod tests {
         assert!(r_diff < 2. * f32::EPSILON, "r difference too high: {}, expected: {}, got: {}", r_diff, expected.r, result.r);
         assert!(theta_diff < 2. * f32::EPSILON, "theta difference too high: {}, expected: {}, got: {}", theta_diff, expected.theta, result.theta);
         assert!(phi_diff < 2. * f32::EPSILON, "phi difference too high: {}, expected: {}, got: {}", phi_diff, expected.phi, result.phi);
+    }
+
+    #[rstest(cp, expected,
+    case(CylindricalPoint3::new(0., 0., 0.), Point3::new(0., 0., 0.)),
+    case(CylindricalPoint3::new(1., 0., 0.), Point3::new(1., 0., 0.)),
+    case(CylindricalPoint3::new(2., 0., 0.), Point3::new(2., 0., 0.)),
+    case(CylindricalPoint3::new(1., FRAC_PI_2, 0.), Point3::new(0., 0., 1.)),
+    case(CylindricalPoint3::new(3., FRAC_PI_2, 1.), Point3::new(0., 1., 3.)),
+    case(CylindricalPoint3::new(3., FRAC_PI_4, 1.), Point3::new((4.5 as f32).sqrt(), 1., (4.5 as f32).sqrt())),
+    case(CylindricalPoint3::new(3., 3. * FRAC_PI_4, 0.), Point3::new(- (4.5 as f32).sqrt(), 0., (4.5 as f32).sqrt())),
+    )]
+
+    fn cylindrical_spoint3_into_point(cp: CylindricalPoint3<f32>, expected: Point3<f32>) {
+        let result: Point3<f32> = cp.into();
+        let x_diff = (result.x - expected.x).abs();
+        let y_diff = (result.y - expected.y).abs();
+        let z_diff = (result.z - expected.z).abs();
+
+        if result != expected {
+            println!("Something's wrong, expected: '{:?}', got: '{:?}'", expected, result);
+        }
+        assert!(x_diff < 2. * f32::EPSILON, "x difference too high: {}", x_diff);
+        assert!(y_diff < 2. * f32::EPSILON, "y difference too high: {}", y_diff);
+        assert!(z_diff < 2. * f32::EPSILON, "z difference too high: {}", z_diff);
+    }
+
+    #[rstest(p, expected,
+    case(Point3::new(0., 0., 0.), CylindricalPoint3::new(0., 0., 0.)),
+    case(Point3::new(1., 0., 0.), CylindricalPoint3::new(1., 0., 0.)),
+    case(Point3::new(2., 0., 0.), CylindricalPoint3::new(2., 0., 0.)),
+    case(Point3::new(0., 0., 1.), CylindricalPoint3::new(1., FRAC_PI_2, 0.)),
+    case(Point3::new(0., 1., 3.), CylindricalPoint3::new(3., FRAC_PI_2, 1.)),
+    case(Point3::new((4.5 as f32).sqrt(), 1., (4.5 as f32).sqrt()), CylindricalPoint3::new(3., FRAC_PI_4, 1.)),
+    case(Point3::new(- (4.5 as f32).sqrt(), 0., (4.5 as f32).sqrt()), CylindricalPoint3::new(3., 3. * FRAC_PI_4, 0.)),
+    )]
+    fn cylindrical_point3_from_point3(p: Point3<f32>, expected: CylindricalPoint3<f32>) {
+        let result: CylindricalPoint3<f32> = CylindricalPoint3::from(p);
+        let r_diff = (result.r - expected.r).abs();
+        let phi_diff = (result.phi - expected.phi).abs();
+        let h_diff = (result.h - expected.h).abs();
+
+        if result != expected {
+            println!("Something's wrong, expected: '{:?}', got: '{:?}'", expected, result);
+        }
+        assert!(r_diff < 3. * f32::EPSILON, "r difference too high: {}, expected: {}, got: {}", r_diff, expected.r, result.r);
+        assert!(phi_diff < 3. * f32::EPSILON, "phi difference too high: {}, expected: {}, got: {}", phi_diff, expected.phi, result.phi);
+        assert!(h_diff < 3. * f32::EPSILON, "h difference too high: {}, expected: {}, got: {}", h_diff, expected.h, result.h);
     }
 }
