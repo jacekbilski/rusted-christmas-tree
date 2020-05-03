@@ -1,5 +1,3 @@
-use std::f32::consts::FRAC_PI_2;
-
 use cgmath::num_traits::Float;
 use cgmath::Point3;
 
@@ -42,19 +40,7 @@ impl<T: Float> From<Point3<T>> for SphericalPoint3<T> {
         } else {
             (p.y / r).acos()
         };
-        let phi = if p.z == zero {
-            if p.x == zero {
-                zero
-            } else {
-                if p.x.is_sign_positive() {
-                    T::from(FRAC_PI_2).unwrap()
-                } else {
-                    T::from(3. * FRAC_PI_2).unwrap()
-                }
-            }
-        } else {
-            (p.x / p.z).atan()
-        };
+        let phi = p.x.atan2(p.z);
         SphericalPoint3::new(r, theta, phi)
     }
 }
@@ -83,8 +69,6 @@ impl<T: Float> Into<Point3<T>> for CylindricalPoint3<T> {
 
 impl<T: Float> From<Point3<T>> for CylindricalPoint3<T> {
     fn from(p: Point3<T>) -> Self {
-        let zero = T::from(0.).unwrap();
-
         let r = (p.x.powi(2) + p.z.powi(2)).sqrt();
         let phi = p.z.atan2(p.x);
         let h = p.y;
