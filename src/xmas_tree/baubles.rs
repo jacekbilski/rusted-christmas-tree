@@ -1,15 +1,17 @@
 use core::f32::consts::PI;
+use std::f32::consts::{FRAC_PI_2, FRAC_PI_4, FRAC_PI_6, FRAC_PI_8};
 use std::iter::FromIterator;
 
 use cgmath::{Matrix4, Point3, vec3, Vector3};
 
+use crate::coords::CylindricalPoint3;
 use crate::material::{Material, MaterialId, Materials};
 use crate::model::{Instance, Model};
 use crate::shader::Shader;
 use crate::xmas_tree::mesh::{Mesh, Vertex};
 
 struct Bauble {
-    center: Point3<f32>,
+    center: CylindricalPoint3<f32>,
     material_id: MaterialId,
 }
 
@@ -59,22 +61,36 @@ impl Baubles {
         let violet_id = materials.add(violet);
 
         let baubles: Vec<Bauble> = vec![
-            Bauble { center: Point3::new(0., 4.2, 0.), material_id: red_id },
-            Bauble { center: Point3::new(1., 3., 1.), material_id: yellow_id },
-            Bauble { center: Point3::new(1.0, 1.0, 2.0), material_id: light_blue_id },
-            Bauble { center: Point3::new(-1.0, 1.0, 2.0), material_id: blue_id },
-            Bauble { center: Point3::new(1.0, 1.0, -2.0), material_id: violet_id },
-            Bauble { center: Point3::new(2.0, 1.0, 0.0), material_id: red_id },
-            Bauble { center: Point3::new(3.0, -1.0, 0.0), material_id: blue_id },
-            Bauble { center: Point3::new(0.0, -1.0, 3.0), material_id: yellow_id },
-            Bauble { center: Point3::new(-3.0, -1.0, 0.0), material_id: red_id },
-            Bauble { center: Point3::new(0.0, -1.0, -3.0), material_id: blue_id },
-            Bauble { center: Point3::new(2.0, -2.0, -3.0), material_id: blue_id },
-            Bauble { center: Point3::new(2.0, -2.0, 3.0), material_id: violet_id },
-            Bauble { center: Point3::new(3.0, -2.0, -2.0), material_id: violet_id },
-            Bauble { center: Point3::new(-3.0, -2.0, -2.0), material_id: red_id },
-            Bauble { center: Point3::new(0.0, -2.0, 4.0), material_id: red_id },
-            Bauble { center: Point3::new(4.0, -2.0, 0.0), material_id: yellow_id }
+            Bauble { center: CylindricalPoint3::new(0., 0., 2.7), material_id: red_id },
+            Bauble { center: CylindricalPoint3::new(1.1, -0.5, 1.3), material_id: blue_id },
+            Bauble { center: CylindricalPoint3::new(1.1, 1.7, 1.3), material_id: yellow_id },
+            Bauble { center: CylindricalPoint3::new(1.5, 1.2, 0.25), material_id: red_id },
+            Bauble { center: CylindricalPoint3::new(1.5, -1.7, 0.25), material_id: light_blue_id },
+            Bauble { center: CylindricalPoint3::new(2.2, 1.0, -0.85), material_id: light_blue_id },
+            Bauble { center: CylindricalPoint3::new(2.2, 3. * FRAC_PI_4, -0.85), material_id: blue_id },
+            Bauble { center: CylindricalPoint3::new(2.2, -0.2, -0.85), material_id: red_id },
+            Bauble { center: CylindricalPoint3::new(3., FRAC_PI_2, -1.8), material_id: violet_id },
+            Bauble { center: CylindricalPoint3::new(3., -FRAC_PI_2, -1.8), material_id: yellow_id },
+            Bauble { center: CylindricalPoint3::new(3., -FRAC_PI_4 - 3., -1.8), material_id: red_id },
+            Bauble { center: CylindricalPoint3::new(3., 3.6, -1.8), material_id: violet_id },
+            Bauble { center: CylindricalPoint3::new(3., 0.2, -1.8), material_id: blue_id },
+            Bauble { center: CylindricalPoint3::new(3.6, 1. * FRAC_PI_6, -3.), material_id: light_blue_id },
+            Bauble { center: CylindricalPoint3::new(3.6, 2. * FRAC_PI_6, -3.), material_id: red_id },
+            Bauble { center: CylindricalPoint3::new(3.6, 4. * FRAC_PI_6, -3.), material_id: blue_id },
+            Bauble { center: CylindricalPoint3::new(3.6, 5. * FRAC_PI_6, -3.), material_id: violet_id },
+            Bauble { center: CylindricalPoint3::new(3.6, 6. * FRAC_PI_6, -3.), material_id: yellow_id },
+            Bauble { center: CylindricalPoint3::new(3.6, 8. * FRAC_PI_6, -3.), material_id: blue_id },
+            Bauble { center: CylindricalPoint3::new(3.6, 9. * FRAC_PI_6, -3.), material_id: light_blue_id },
+            Bauble { center: CylindricalPoint3::new(3.6, 11. * FRAC_PI_6, -3.), material_id: yellow_id },
+            Bauble { center: CylindricalPoint3::new(4., 3. * FRAC_PI_8, -4.1), material_id: light_blue_id },
+            Bauble { center: CylindricalPoint3::new(4., 4. * FRAC_PI_8, -4.1), material_id: yellow_id },
+            Bauble { center: CylindricalPoint3::new(4., 5. * FRAC_PI_8, -4.1), material_id: blue_id },
+            Bauble { center: CylindricalPoint3::new(4., 7. * FRAC_PI_8, -4.1), material_id: violet_id },
+            Bauble { center: CylindricalPoint3::new(4., 11. * FRAC_PI_8, -4.1), material_id: red_id },
+            Bauble { center: CylindricalPoint3::new(4., 12. * FRAC_PI_8, -4.1), material_id: blue_id },
+            Bauble { center: CylindricalPoint3::new(4., 13. * FRAC_PI_8, -4.1), material_id: yellow_id },
+            Bauble { center: CylindricalPoint3::new(4., 17. * FRAC_PI_8, -4.1), material_id: red_id },
+            Bauble { center: CylindricalPoint3::new(4., 21. * FRAC_PI_8, -4.1), material_id: blue_id },
         ];
 
         let mut vertices: Vec<Vertex> = Vec::with_capacity(2 * precision.pow(2) as usize);
@@ -87,7 +103,8 @@ impl Baubles {
         let instances = Vec::from_iter(
             baubles.iter()
                 .map(|b| {
-                    let center_arr: [f32; 3] = b.center.into();
+                    let center_cartesian: Point3<f32> = b.center.into();
+                    let center_arr: [f32; 3] = center_cartesian.into();
                     Instance { model: Matrix4::from_translation(Vector3::from(center_arr)), material_id : b.material_id }
                 })
         );
