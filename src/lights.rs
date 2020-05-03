@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 extern crate gl;
 
 use std::{mem, ptr};

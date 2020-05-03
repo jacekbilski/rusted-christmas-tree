@@ -11,7 +11,7 @@ use crate::coords::SphericalPoint3;
 use crate::shader::CAMERA_UBO_BINDING_POINT;
 
 pub struct Camera {
-    position: Point3<f32>,
+    position: SphericalPoint3<f32>,
     look_at: Point3<f32>,
     ubo: u32,
     window_width: f32,
@@ -19,10 +19,10 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(position: Point3<f32>, look_at: Point3<f32>, window: &Window) -> Self {
+    pub fn new(position: SphericalPoint3<f32>, look_at: Point3<f32>, window: &Window) -> Self {
         let (window_width, window_height) = window.get_size();
         let ubo = Camera::setup_camera_ubo();
-        let camera = Camera {position, look_at, ubo, window_width: window_width as f32, window_height: window_height as f32};
+        let camera = Camera { position, look_at, ubo, window_width: window_width as f32, window_height: window_height as f32 };
         camera.update_uniforms();
         camera
     }
@@ -46,9 +46,10 @@ impl Camera {
         let vector3_size = mem::size_of::<Vector4<f32>>() as isize;
         unsafe {
             gl::BindBuffer(gl::UNIFORM_BUFFER, self.ubo);
-            gl::BufferSubData(gl::UNIFORM_BUFFER, 0, vector3_size, self.position.as_ptr() as *const c_void);
+            let pos: Point3<f32> = self.position.into();
+            gl::BufferSubData(gl::UNIFORM_BUFFER, 0, vector3_size, pos.as_ptr() as *const c_void);
 
-            let view: Matrix4<f32> = Matrix4::look_at(self.position, self.look_at, vec3(0.0, 1.0, 0.0));
+            let view: Matrix4<f32> = Matrix4::look_at(self.position.into(), self.look_at, vec3(0.0, 1.0, 0.0));
             gl::BufferSubData(gl::UNIFORM_BUFFER, vector3_size, matrix_size, view.as_ptr() as *const c_void);
             let projection = perspective(Deg(45.0), self.window_width / self.window_height, 0.1, 100.0);
             gl::BufferSubData(gl::UNIFORM_BUFFER, vector3_size + matrix_size, matrix_size, projection.as_ptr() as *const c_void);
@@ -65,16 +66,12 @@ impl Camera {
     }
 
     pub fn rotate_horizontally(&mut self, angle: f32) {
-        let mut sp = SphericalPoint3::from(self.position);
-        sp.phi += angle;
-        self.position = sp.into();
+        self.position.phi += angle;
         self.update_uniforms();
     }
 
     pub fn rotate_vertically(&mut self, angle: f32) {
-        let mut sp = SphericalPoint3::from(self.position);
-        sp.theta += angle;
-        self.position = sp.into();
+        self.position.theta += angle;
         self.update_uniforms();
     }
 }
