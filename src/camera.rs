@@ -33,7 +33,7 @@ impl Camera {
             gl::GenBuffers(1, &mut camera_ubo);
             gl::BindBuffer(gl::UNIFORM_BUFFER, camera_ubo);
             let matrix_size = mem::size_of::<Matrix4<f32>>() as isize;
-            let vector3_size = mem::size_of::<Vector4<f32>>() as isize; // thhere's no mistake, Vector3 takes the same amount of memory as Vector4
+            let vector3_size = mem::size_of::<Vector4<f32>>() as isize; // there's no mistake, Vector3 takes the same amount of memory as Vector4
             gl::BufferData(gl::UNIFORM_BUFFER, vector3_size + 2 * matrix_size, ptr::null(), gl::STATIC_DRAW);
             gl::BindBufferBase(gl::UNIFORM_BUFFER, CAMERA_UBO_BINDING_POINT, camera_ubo);
             gl::BindBuffer(gl::UNIFORM_BUFFER, 0);

@@ -22,7 +22,7 @@ pub struct Scene {
 
 impl Scene {
     pub fn setup(window: &Window) -> Self {
-        let camera = Camera::new(SphericalPoint3::new(18., 1.7, 0.9).into(), Point3::new(0., -1., 0.), &window);
+        let camera = Camera::new(SphericalPoint3::new(18., 1.7, 0.9), Point3::new(0., -1., 0.), &window);
         let mut lights = Lights::setup();
         lights.add(Point3::new(10., 100., 10.), vec3(0.3, 0.3, 0.3), vec3(0.2, 0.2, 0.2), vec3(0., 0., 0.));
         lights.add(Point3::new(5., 6., 2.), vec3(0.2, 0.2, 0.2), vec3(2., 2., 2.), vec3(0.5, 0.5, 0.5));
