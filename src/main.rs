@@ -36,9 +36,9 @@ fn main() {
     unsafe {
         gl::Enable(gl::MULTISAMPLE);
         gl::Enable(gl::DEPTH_TEST);
-        // gl::Enable(gl::CULL_FACE);
+        gl::Enable(gl::CULL_FACE);
         // gl::CullFace(gl::BACK);
-        // gl::FrontFace(gl::CW);
+        // gl::FrontFace(gl::CCW);
     }
 
     let mut scene = Scene::setup(&window);

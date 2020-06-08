@@ -19,8 +19,8 @@ impl Ground {
         ];
 
         let indices: Vec<u32> = vec![
-            0, 2, 1,
-            1, 2, 3,
+            0, 1, 2,
+            1, 3, 2,
         ];
 
         let ambient: Vector3<f32> = vec3(1., 1., 1.);
