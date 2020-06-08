@@ -51,7 +51,7 @@ impl Scene {
 
     pub fn draw(&mut self) {
         unsafe {
-            gl::ClearColor(0., 0., 0., 1.0);
+            gl::ClearColor(0.0157, 0., 0.3607, 1.0);
             gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
             for d in &mut self.models {
                 d.draw(&self.shader);
