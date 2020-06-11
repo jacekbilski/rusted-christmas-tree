@@ -1,14 +1,14 @@
 extern crate gl;
 extern crate glfw;
 
-use std::f32::consts::FRAC_PI_8;
+use std::f32::consts::{FRAC_PI_8, PI};
 use std::sync::mpsc::Receiver;
 
 use fps_calculator::FpsCalculator;
 use observer::RenderLoopObserver;
 use xmas_tree::scene::Scene;
 
-use self::glfw::{Action, Context, Glfw, Key, Window, WindowEvent};
+use self::glfw::{Action, Context, Glfw, Key, MouseButtonLeft, Window, WindowEvent};
 
 mod camera;
 mod coords;
@@ -23,6 +23,11 @@ mod xmas_tree;
 // settings
 const SCR_WIDTH: u32 = 1920;
 const SCR_HEIGHT: u32 = 1080;
+
+struct Main {
+    last_cursor_x: f64,
+    last_cursor_y: f64,
+}
 
 fn main() {
     // glfw: initialize and configure
@@ -43,10 +48,11 @@ fn main() {
 
     let mut scene = Scene::setup(&window);
     let mut fps_calculator = FpsCalculator::new();
+    let mut main = Main { last_cursor_x: -1., last_cursor_y: -1. };
 
     // render loop
     while !window.should_close() {
-        process_events(&mut window, &events, &mut scene);
+        process_events(&mut main, &mut window, &events, &mut scene);
         scene.next_frame();
         scene.draw();
         window.swap_buffers();
@@ -65,10 +71,13 @@ fn setup_window(glfw: &mut Glfw) -> (Window, Receiver<(f64, WindowEvent)>) {
     window.make_current();
     window.set_key_polling(true);
     window.set_framebuffer_size_polling(true);
+    window.set_cursor_pos_polling(true);
     (window, events)
 }
 
-fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>, scene: &mut Scene) {
+fn process_events(main: &mut Main, window: &mut glfw::Window, events: &Receiver<(f64, glfw::WindowEvent)>, scene: &mut Scene) {
+    let mut mouse_offset_x: f64 = 0.;
+    let mut mouse_offset_y: f64 = 0.;
     for (_, event) in glfw::flush_messages(events) {
         let angle_change = FRAC_PI_8 / 4.;
         match event {
@@ -91,7 +100,19 @@ fn process_events(window: &mut glfw::Window, events: &Receiver<(f64, glfw::Windo
             glfw::WindowEvent::Key(Key::Down, _, Action::Press, _) | glfw::WindowEvent::Key(Key::Down, _, Action::Repeat, _) => {
                 scene.camera.rotate_vertically(angle_change);
             },
+            glfw::WindowEvent::CursorPos(x, y) => {
+                mouse_offset_x = x - main.last_cursor_x;
+                mouse_offset_y = y - main.last_cursor_y;
+                main.last_cursor_x = x;
+                main.last_cursor_y = y;
+            },
             _ => {}
         }
+    }
+    if window.get_mouse_button(MouseButtonLeft) == Action::Press && (mouse_offset_x != 0. || mouse_offset_y != 0.) {
+        let (width, height) = window.get_size();
+        let max = width.max(height) as f32;
+        scene.camera.rotate_horizontally(-4. * PI / max * mouse_offset_x as f32);
+        scene.camera.rotate_vertically(-4. * PI / max * mouse_offset_y as f32);
     }
 }
